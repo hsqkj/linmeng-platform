@@ -1,0 +1,280 @@
+:root {
+  /* 商家端主色 */
+  --primary-color: #1989fa;
+  --primary-light: #4aa4fb;
+  --primary-dark: #1277cc;
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  
+  /* 辅助色 */
+  --success-color: #67C23A;
+  --success-light: #85ce61;
+  --success-dark: #5daf34;
+  
+  --warning-color: #E6A23C;
+  --warning-light: #ebb563;
+  --warning-dark: #cf9236;
+  
+  --danger-color: #F56C6C;
+  --danger-light: #f78989;
+  --danger-dark: #dd6161;
+  
+  --info-color: #909399;
+  --info-light: #a6a9ad;
+  --info-dark: #82848a;
+  
+  /* 文本色 */
+  --text-primary: #303133;
+  --text-regular: #606266;
+  --text-secondary: #909399;
+  --text-placeholder: #C0C4CC;
+  
+  /* 边框色 */
+  --border-base: #DCDFE6;
+  --border-light: #E4E7ED;
+  --border-lighter: #EBEEF5;
+  --border-extra-light: #F2F6FC;
+  
+  /* 背景色 */
+  --bg-white: #FFFFFF;
+  --bg-page: #F5F7FA;
+  --bg-card: #FFFFFF;
+  --bg-hover: #F5F7FA;
+  
+  /* 间距 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  
+  /* 圆角 */
+  --border-radius-sm: 4px;
+  --border-radius-base: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+  --border-radius-round: 999px;
+  
+  /* 阴影 */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-base: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.15);
+  --shadow-card: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  
+  /* 字体 */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 
+                 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', 
+                 Helvetica, Arial, sans-serif;
+  
+  --font-size-large: 16px;
+  --font-size-base: 14px;
+  --font-size-small: 12px;
+  --font-size-mini: 10px;
+  
+  --line-height-base: 1.5;
+  --line-height-large: 1.6;
+  --line-height-small: 1.4;
+  
+  /* 动画 */
+  --transition-base: all 0.3s ease;
+  --transition-fast: all 0.2s ease;
+  --transition-slow: all 0.5s ease;
+}
+
+/* 全局样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  font-size: 16px;
+  font-family: var(--font-family);
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  line-height: var(--line-height-base);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Vant组件样式覆盖 */
+.van-nav-bar {
+  background: var(--bg-white);
+}
+
+.van-nav-bar__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.van-cell-group--inset {
+  margin: var(--spacing-md);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+
+.van-button--primary {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.van-button--primary:active {
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+}
+
+.van-tag--primary {
+  background: var(--primary-color);
+}
+
+.van-grid-item__content {
+  padding: var(--spacing-md);
+}
+
+/* 卡片样式 */
+.card {
+  background: var(--bg-white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--spacing-md);
+  margin: var(--spacing-md);
+}
+
+/* 会员卡片样式 */
+.member-card {
+  margin: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--primary-gradient);
+  border-radius: var(--border-radius-lg);
+  color: white;
+}
+
+.member-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.member-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.member-name {
+  font-size: var(--font-size-large);
+  font-weight: 600;
+}
+
+.member-quota {
+  margin-top: var(--spacing-sm);
+}
+
+.quota-text {
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-base);
+  opacity: 0.9;
+}
+
+.quota-value {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* 按钮样式 */
+.btn-primary {
+  background: var(--primary-gradient);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-round);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition: var(--transition-base);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* 文本样式 */
+.text-primary {
+  color: var(--primary-color);
+}
+
+.text-success {
+  color: var(--success-color);
+}
+
+.text-warning {
+  color: var(--warning-color);
+}
+
+.text-danger {
+  color: var(--danger-color);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+/* 间距工具类 */
+.mt-xs { margin-top: var(--spacing-xs); }
+.mt-sm { margin-top: var(--spacing-sm); }
+.mt-md { margin-top: var(--spacing-md); }
+.mt-lg { margin-top: var(--spacing-lg); }
+.mt-xl { margin-top: var(--spacing-xl); }
+
+.mb-xs { margin-bottom: var(--spacing-xs); }
+.mb-sm { margin-bottom: var(--spacing-sm); }
+.mb-md { margin-bottom: var(--spacing-md); }
+.mb-lg { margin-bottom: var(--spacing-lg); }
+.mb-xl { margin-bottom: var(--spacing-xl); }
+
+.p-xs { padding: var(--spacing-xs); }
+.p-sm { padding: var(--spacing-sm); }
+.p-md { padding: var(--spacing-md); }
+.p-lg { padding: var(--spacing-lg); }
+.p-xl { padding: var(--spacing-xl); }
+
+/* 动画效果 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease;
+}

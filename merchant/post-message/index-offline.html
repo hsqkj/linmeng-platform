@@ -1,0 +1,2599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>邻盟营销助手 - 发布消息</title>
+    <link rel="stylesheet" href="../../css/output.css">
+    <style>
+        /* 移动端基础样式 */
+        html {
+            font-size: 16px;
+        }
+        @media (max-width: 375px) {
+            html {
+                font-size: 14px;
+            }
+        }
+        body {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+        /* 移动端容器 */
+        .mobile-container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0.5rem;
+        }
+        @media (min-width: 640px) {
+            .mobile-container {
+                max-width: 480px;
+                padding: 1rem;
+            }
+        }
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+        .step-item {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+        .step-item::after {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: 100%;
+            width: 100%;
+            height: 2px;
+            background-color: #e5e7eb;
+            z-index: 1;
+        }
+        .step-item:last-child::after {
+            display: none;
+        }
+        .step-item.active::after {
+            background-color: #f97316;
+        }
+        .step-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #e5e7eb;
+            color: #4b5563;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            position: relative;
+            z-index: 2;
+            font-weight: 600;
+        }
+        .step-item.active .step-number {
+            background-color: #f97316;
+            color: white;
+        }
+        .step-text {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        .step-item.active .step-text {
+            color: #1f2937;
+            font-weight: 500;
+        }
+        .template-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .template-card:hover {
+            border-color: #f97316;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(249, 115, 22, 0.1), 0 10px 10px -5px rgba(249, 115, 22, 0.04);
+        }
+        .template-card.active {
+            border-color: #f97316;
+            background-color: #fff7ed;
+        }
+        .form-step {
+            display: none;
+        }
+        .form-step.active {
+            display: block;
+        }
+        .media-preview {
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+        }
+        .channel-edit-card {
+            transition: all 0.2s;
+        }
+        .channel-edit-card:hover {
+            border-color: #f97316;
+        }
+        .icon {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .icon-sm {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .icon-xl {
+            width: 48px;
+            height: 48px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .tag-item.selected {
+            background-color: #fff7ed;
+            color: #ea580c;
+            border: 1px solid #ea580c;
+        }
+        .voice-recording {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .preview-modal.show {
+            display: flex;
+        }
+        .preview-content {
+            background: white;
+            border-radius: 1rem;
+            max-width: 400px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .ocr-result {
+            background: #f3f4f6;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .channel-select-card {
+            transition: all 0.2s ease;
+        }
+        .channel-select-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .channel-select-card.selected {
+            border-color: #f97316;
+            background-color: #fff7ed;
+        }
+        .channel-content-card {
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-orange-50 to-red-50 min-h-screen">
+    <div class="mobile-container">
+        <!-- 商家信息栏 - 移动端优化 -->
+        <div class="bg-white rounded-xl shadow-md p-3 flex justify-between items-center mb-3">
+            <div class="flex items-center cursor-pointer hover:bg-gray-50 rounded-lg p-1 transition-colors" onclick="goToMerchantDetail()">
+                <img id="merchant-avatar" src="" alt="门店Logo" class="w-8 h-8 rounded-full mr-2 object-contain bg-white">
+                <div>
+                    <h2 id="merchant-name" class="font-bold text-gray-900 text-sm hover:text-orange-600 transition-colors">商家名称</h2>
+                    <p class="text-[10px] text-gray-500">点击查看详情</p>
+                </div>
+            </div>
+            <button onclick="logout()" class="text-xs text-gray-500 hover:text-gray-700 px-2 py-1">
+                退出
+            </button>
+        </div>
+        
+        <!-- 顶部导航栏 - 移动端优化 -->
+        <div class="bg-white rounded-xl shadow-md p-3 flex justify-between items-center mb-4">
+            <div class="flex items-center">
+                <button onclick="window.history.back()" class="mr-2 text-gray-600 hover:text-gray-900 p-1">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                </button>
+                <h1 class="text-base font-bold text-gray-900">发布营销信息</h1>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="showDrafts()" class="text-gray-600 hover:text-gray-900 p-1.5" title="草稿箱">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                </button>
+                <button onclick="showStatistics()" class="text-gray-600 hover:text-gray-900 p-1.5" title="数据统计">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                </button>
+                <button onclick="resetForm()" class="text-gray-600 hover:text-gray-900 p-1.5" title="重置">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M21 12a9 9 0 1 1-9 9 9.75 9.75 0 0 1 6.74-2.74L21 16"/><path d="M21 21v-5h-5"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- 步骤指示器 - 移动端优化 -->
+        <div class="bg-white rounded-xl shadow-md p-4 mb-4">
+            <div class="step-indicator">
+                <div class="step-item active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-text text-xs">创建内容</div>
+                </div>
+                <div class="step-item" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-text text-xs">AI优化</div>
+                </div>
+                <div class="step-item" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-text text-xs">选择渠道</div>
+                </div>
+            </div>
+        </div>
+
+        <form id="post-form" class="bg-white rounded-xl shadow-md p-4">
+            <!-- 步骤1：选择模板并编辑内容 -->
+            <div class="form-step active" id="step-1">
+                <h2 class="text-lg font-bold text-gray-900 mb-2">创建营销内容</h2>
+                <p class="text-gray-600 text-sm mb-4">3步快速完成发布，AI智能优化</p>
+                
+                <!-- 模板选择区域 -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">📋 选择营销场景（可选）</label>
+                    <div class="flex overflow-x-auto space-x-2 mb-2 pb-2 -mx-4 px-4">
+                        <button type="button" class="template-category active px-3 py-1.5 bg-orange-600 text-white rounded-lg text-xs font-medium whitespace-nowrap">全部</button>
+                        <button type="button" class="template-category px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300 whitespace-nowrap">促销活动</button>
+                        <button type="button" class="template-category px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300 whitespace-nowrap">新品上市</button>
+                        <button type="button" class="template-category px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300 whitespace-nowrap">服务预约</button>
+                        <button type="button" class="template-category px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300 whitespace-nowrap">会员专享</button>
+                    </div>
+                    
+                    <div class="grid grid-cols-4 gap-2">
+                        <div class="template-card p-2 rounded-lg border border-gray-200 hover:border-orange-400 cursor-pointer transition-all" data-template="new-store" data-category="new-store">
+                            <div class="h-10 bg-gradient-to-r from-orange-400 to-red-500 rounded-md mb-1.5 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3zM9 9h6M9 13h6M9 17h6"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-xs text-center">新店开业</h3>
+                            <p class="text-[10px] text-gray-500 text-center truncate">开业大礼</p>
+                        </div>
+                        
+                        <div class="template-card p-2 rounded-lg border border-gray-200 hover:border-orange-400 cursor-pointer transition-all" data-template="discount" data-category="discount">
+                            <div class="h-10 bg-gradient-to-r from-red-400 to-pink-500 rounded-md mb-1.5 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-xs text-center">限时折扣</h3>
+                            <p class="text-[10px] text-gray-500 text-center truncate">特价促销</p>
+                        </div>
+                        
+                        <div class="template-card p-2 rounded-lg border border-gray-200 hover:border-orange-400 cursor-pointer transition-all" data-template="package" data-category="package">
+                            <div class="h-10 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-md mb-1.5 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-xs text-center">套餐优惠</h3>
+                            <p class="text-[10px] text-gray-500 text-center truncate">组合推荐</p>
+                        </div>
+                        
+                        <div class="template-card p-2 rounded-lg border border-gray-200 hover:border-orange-400 cursor-pointer transition-all" data-template="notice" data-category="notice">
+                            <div class="h-10 bg-gradient-to-r from-green-400 to-teal-500 rounded-md mb-1.5 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-xs text-center">活动通知</h3>
+                            <p class="text-[10px] text-gray-500 text-center truncate">重要通知</p>
+                        </div>
+                        
+                        <div class="template-card p-2 rounded-lg border border-gray-200 hover:border-orange-400 cursor-pointer transition-all" data-template="service" data-category="service">
+                            <div class="h-10 bg-gradient-to-r from-purple-400 to-pink-500 rounded-md mb-1.5 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-xs text-center">上门服务</h3>
+                            <p class="text-[10px] text-gray-500 text-center truncate">预约下单</p>
+                        </div>
+                        
+                        <div class="template-card p-2 rounded-lg border border-gray-200 hover:border-orange-400 cursor-pointer transition-all" data-template="group-buy" data-category="group-buy">
+                            <div class="h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-md mb-1.5 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-xs text-center">拼团集赞</h3>
+                            <p class="text-[10px] text-gray-500 text-center truncate">拉新引流</p>
+                        </div>
+                        
+                        <div class="template-card p-2 rounded-lg border border-gray-200 hover:border-orange-400 cursor-pointer transition-all" data-template="festival" data-category="festival">
+                            <div class="h-10 bg-gradient-to-r from-pink-400 to-rose-500 rounded-md mb-1.5 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-xs text-center">节日特惠</h3>
+                            <p class="text-[10px] text-gray-500 text-center truncate">专属福利</p>
+                        </div>
+                        
+                        <div class="template-card p-2 rounded-lg border border-gray-200 hover:border-orange-400 cursor-pointer transition-all" data-template="member" data-category="member">
+                            <div class="h-10 bg-gradient-to-r from-indigo-400 to-purple-500 rounded-md mb-1.5 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.89"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-xs text-center">会员专享</h3>
+                            <p class="text-[10px] text-gray-500 text-center truncate">积分兑换</p>
+                        </div>
+                        
+                        <div class="template-card p-2 rounded-lg border border-gray-200 hover:border-orange-400 cursor-pointer transition-all" data-template="clearance" data-category="clearance">
+                            <div class="h-10 bg-gradient-to-r from-gray-400 to-gray-600 rounded-md mb-1.5 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-xs text-center">尾货清仓</h3>
+                            <p class="text-[10px] text-gray-500 text-center truncate">亏本甩卖</p>
+                        </div>
+                        
+                        <div class="template-card p-2 rounded-lg border border-gray-200 hover:border-orange-400 cursor-pointer transition-all" data-template="custom" data-category="custom">
+                            <div class="h-10 bg-gradient-to-r from-slate-400 to-slate-600 rounded-md mb-1.5 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-xs text-center">自定义</h3>
+                            <p class="text-[10px] text-gray-500 text-center truncate">自由创作</p>
+                        </div>
+                        
+                        <!-- 新增模板 -->
+                        <div class="template-card p-2 rounded-lg border border-gray-200 hover:border-orange-400 cursor-pointer transition-all" data-template="new-product" data-category="new-product">
+                            <div class="h-10 bg-gradient-to-r from-rose-400 to-pink-500 rounded-md mb-1.5 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-xs text-center">新品上市</h3>
+                            <p class="text-[10px] text-gray-500 text-center truncate">全新产品</p>
+                        </div>
+                        
+                        <div class="template-card p-2 rounded-lg border border-gray-200 hover:border-orange-400 cursor-pointer transition-all" data-template="register-gift" data-category="register-gift">
+                            <div class="h-10 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-md mb-1.5 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-xs text-center">注册有礼</h3>
+                            <p class="text-[10px] text-gray-500 text-center truncate">新用户福利</p>
+                        </div>
+                        
+                        <div class="template-card p-2 rounded-lg border border-gray-200 hover:border-orange-400 cursor-pointer transition-all" data-template="share-reward" data-category="share-reward">
+                            <div class="h-10 bg-gradient-to-r from-violet-400 to-purple-500 rounded-md mb-1.5 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-xs text-center">转发有奖</h3>
+                            <p class="text-[10px] text-gray-500 text-center truncate">分享裂变</p>
+                        </div>
+                        
+                        <div class="template-card p-2 rounded-lg border border-gray-200 hover:border-orange-400 cursor-pointer transition-all" data-template="recruit-agent" data-category="recruit-agent">
+                            <div class="h-10 bg-gradient-to-r from-amber-400 to-orange-500 rounded-md mb-1.5 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-xs text-center">招募代理</h3>
+                            <p class="text-[10px] text-gray-500 text-center truncate">合作共赢</p>
+                        </div>
+                        
+                        <div class="template-card p-2 rounded-lg border border-gray-200 hover:border-orange-400 cursor-pointer transition-all" data-template="recruit-worker" data-category="recruit-worker">
+                            <div class="h-10 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-md mb-1.5 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-xs text-center">招工用工</h3>
+                            <p class="text-[10px] text-gray-500 text-center truncate">人才招聘</p>
+                        </div>
+                        
+                        <div class="template-card p-2 rounded-lg border border-gray-200 hover:border-orange-400 cursor-pointer transition-all" data-template="franchise" data-category="franchise">
+                            <div class="h-10 bg-gradient-to-r from-fuchsia-400 to-pink-500 rounded-md mb-1.5 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-xs text-center">招商加盟</h3>
+                            <p class="text-[10px] text-gray-500 text-center truncate">品牌扩张</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 智能输入方式 -->
+                <div class="mb-4 p-3 bg-gradient-to-r from-orange-50 to-blue-50 rounded-xl border border-orange-100">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">🎯 智能输入方式（可选）</label>
+                    <p class="text-[10px] text-gray-500 mb-2">选择模板后，可使用语音按模板结构输入内容</p>
+                    <div class="flex gap-2">
+                        <button type="button" id="voice-btn" onclick="toggleVoiceInput()" class="flex-1 flex items-center justify-center px-3 py-2 bg-white border-2 border-orange-200 text-orange-700 rounded-lg hover:border-orange-400 hover:bg-orange-50 transition-all text-sm">
+                            <svg id="voice-icon" class="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                            <span id="voice-text">语音输入</span>
+                        </button>
+                        <button type="button" onclick="startOCR()" class="flex-1 flex items-center justify-center px-3 py-2 bg-white border-2 border-blue-200 text-blue-700 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all text-sm">
+                            <svg class="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            图片识别
+                        </button>
+                        <input type="file" id="ocr-file" class="hidden" accept="image/*" onchange="handleOCRFile(event)">
+                    </div>
+                    <p class="text-[10px] text-gray-500 mt-2">支持语音转文字、图片文字识别</p>
+                    
+                    <!-- OCR结果显示区域 -->
+                    <div id="ocr-result-container" class="hidden mt-3">
+                        <div class="ocr-result p-3">
+                            <p class="font-medium text-gray-700 mb-2 text-sm">识别结果：</p>
+                            <p id="ocr-text" class="text-gray-600 text-sm"></p>
+                            <div class="mt-3 flex gap-2">
+                                <button type="button" onclick="useOCRResult()" class="px-3 py-1.5 bg-orange-500 text-white rounded text-xs hover:bg-orange-600">使用此内容</button>
+                                <button type="button" onclick="closeOCRResult()" class="px-3 py-1.5 bg-gray-300 text-gray-700 rounded text-xs hover:bg-gray-400">关闭</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 2. 营销标题 -->
+                <div class="mb-4">
+                    <label for="post-title" class="block text-sm font-medium text-gray-700 mb-1.5">
+                        营销标题 <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="post-title" name="post-title" maxlength="100" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm" placeholder="请输入吸引人的标题，如：【新店开业】全场5折起！" oninput="updateTitleCount()">
+                    <p class="text-[10px] text-gray-500 mt-1 flex justify-between">
+                        <span>📝 限制100字</span>
+                        <span id="title-count" class="text-gray-400">0/100</span>
+                    </p>
+                </div>
+                
+                <!-- 3. 详情内容 -->
+                <div class="mb-4">
+                    <label for="post-content" class="block text-sm font-medium text-gray-700 mb-1.5">
+                        详情内容 <span class="text-red-500">*</span>
+                    </label>
+                    <textarea id="post-content" name="post-content" rows="10" maxlength="2000" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm" placeholder="请输入营销内容，突出优惠信息、活动时间、参与方式等关键信息" oninput="updateContentCount()"></textarea>
+                    <p class="text-[10px] text-gray-500 mt-1.5 flex justify-between">
+                        <span>💡 提示：内容越详细，AI优化效果越好</span>
+                        <span id="content-count" class="text-gray-400">0/2000</span>
+                    </p>
+                </div>
+                
+                <!-- 4. 上传图片/视频（可选） -->
+                <div class="mb-4">
+                    <label for="post-media" class="block text-sm font-medium text-gray-700 mb-1.5">
+                        上传图片/视频 <span class="text-gray-400 font-normal">（可选）</span>
+                    </label>
+                    <div class="mt-2 flex justify-center px-4 pt-4 pb-4 border-2 border-dashed border-orange-200 rounded-xl hover:border-orange-400 transition-colors bg-orange-50/30">
+                        <div class="space-y-2 text-center">
+                            <svg class="w-10 h-10 text-orange-400 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <div class="flex text-sm text-gray-600 justify-center">
+                                <label for="post-media" class="relative cursor-pointer bg-orange-600 text-white font-medium py-1.5 px-3 rounded-lg hover:bg-orange-700 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-orange-500 text-sm">
+                                    <span>选择文件</span>
+                                    <input id="post-media" name="post-media" type="file" class="sr-only" accept="image/*,video/*" multiple onchange="handleMediaUpload(event)">
+                                </label>
+                            </div>
+                            <p class="text-[10px] text-gray-500">支持 PNG, JPG, WEBP, MP4 格式，最多9张</p>
+                        </div>
+                    </div>
+                    
+                    <div id="media-preview-container" class="mt-3 hidden">
+                        <div id="media-preview-grid" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+                
+                <!-- 5. 标签（可选） -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                        标签 <span class="text-gray-400 font-normal">（可选）</span>
+                    </label>
+                    <div class="flex flex-wrap gap-1.5 mb-2">
+                        <span class="tag-item px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full text-xs cursor-pointer hover:bg-orange-100 hover:text-orange-700" onclick="toggleTag(this)">新店开业</span>
+                        <span class="tag-item px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full text-xs cursor-pointer hover:bg-orange-100 hover:text-orange-700" onclick="toggleTag(this)">限时折扣</span>
+                        <span class="tag-item px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full text-xs cursor-pointer hover:bg-orange-100 hover:text-orange-700" onclick="toggleTag(this)">免费体验</span>
+                        <span class="tag-item px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full text-xs cursor-pointer hover:bg-orange-100 hover:text-orange-700" onclick="toggleTag(this)">到店礼</span>
+                        <span class="tag-item px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full text-xs cursor-pointer hover:bg-orange-100 hover:text-orange-700" onclick="toggleTag(this)">会员专享</span>
+                    </div>
+                    <input type="text" id="custom-tag" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="输入自定义标签，按回车添加" onkeypress="handleCustomTag(event)">
+                    <div id="selected-tags" class="flex flex-wrap gap-1.5 mt-2"></div>
+                </div>
+                
+                <!-- 6. 附加功能（可选） -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        附加功能 <span class="text-gray-400 font-normal">（可选）</span>
+                    </label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="inline-flex items-center p-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="enable-comment" value="1" checked class="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded">
+                            <span class="ml-2 text-xs text-gray-700">允许留言</span>
+                        </label>
+                        <label class="inline-flex items-center p-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="enable-share" value="1" checked class="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded">
+                            <span class="ml-2 text-xs text-gray-700">允许分享</span>
+                        </label>
+                        <label class="inline-flex items-center p-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="enable-appointment" value="1" class="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded">
+                            <span class="ml-2 text-xs text-gray-700">服务预约</span>
+                        </label>
+                        <label class="inline-flex items-center p-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="enable-group-buy" value="1" class="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded">
+                            <span class="ml-2 text-xs text-gray-700">拼团功能</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 步骤2：AI优化 -->
+            <div class="form-step" id="step-2">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">AI智能优化</h2>
+                <p class="text-gray-600 mb-6">AI将帮您优化内容，提升营销效果和合规性</p>
+                
+                <!-- 优化维度（默认执行，仅展示） -->
+                <div class="mb-6" id="ai-options-section">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">AI优化维度</label>
+                    <div class="space-y-3">
+                        <div class="flex items-center p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-700">语句通顺度</span>
+                                <p class="text-xs text-gray-500">优化语句表达，让内容更流畅</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-3 bg-purple-50 border border-purple-100 rounded-lg">
+                            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-700">营销吸引力</span>
+                                <p class="text-xs text-gray-500">增强营销话术，提升转化率</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-3 bg-green-50 border border-green-100 rounded-lg">
+                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-700">社区场景适配</span>
+                                <p class="text-xs text-gray-500">适配社区营销场景，更接地气</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-3 bg-orange-50 border border-orange-100 rounded-lg">
+                            <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-orange-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-700">广告法合规</span>
+                                <p class="text-xs text-gray-500">检查违规词汇，确保合规发布</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-3">✨ 以上4个维度将自动执行优化</p>
+                </div>
+                
+                <!-- 原文与优化后对比 -->
+                <div id="ai-optimization-result" class="hidden mb-6">
+                    <h3 class="font-semibold text-gray-800 mb-4 flex items-center">
+                        <span class="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm mr-2">✓</span>
+                        优化完成
+                    </h3>
+                    
+                    <!-- 对比展示区域 - 上下排列 -->
+                    <div class="space-y-4">
+                        <!-- 原文区域 -->
+                        <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-2 py-1 bg-gray-200 text-gray-600 rounded text-xs">📄 原文（可编辑）</span>
+                                <span class="text-[10px] text-gray-400">您可以直接编辑原文，然后点击"继续AI优化"</span>
+                            </div>
+                            <!-- 原文标题 -->
+                            <div class="mb-3">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xs text-gray-500">标题</span>
+                                    <span class="text-[10px] text-gray-400" id="ai-original-title-count">0/100</span>
+                                </div>
+                                <input type="text" id="original-title-display" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" maxlength="100" oninput="updateAIOriTitleCount()" placeholder="请输入标题">
+                            </div>
+                            <!-- 原文内容 -->
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xs text-gray-500">内容</span>
+                                    <span class="text-[10px] text-gray-400" id="ai-original-content-count">0/2000</span>
+                                </div>
+                                <textarea id="original-content-display" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none" maxlength="2000" oninput="updateAIOriContentCount()" placeholder="请输入内容"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- 优化后区域 -->
+                        <div class="p-4 bg-green-50 rounded-xl border border-green-200">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-2 py-1 bg-green-500 text-white rounded text-xs">✨ AI优化后（可编辑）</span>
+                                <span class="text-[10px] text-gray-500">您可以编辑优化结果，然后继续优化或确认</span>
+                            </div>
+                            <!-- 优化后标题 -->
+                            <div class="mb-3">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xs text-gray-500">标题</span>
+                                    <span class="text-[10px] text-gray-400" id="ai-optimized-title-count">0/100</span>
+                                </div>
+                                <input type="text" id="optimized-title-display" class="w-full px-3 py-2 border border-green-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white" maxlength="100" oninput="updateAIOptTitleCount()" placeholder="AI优化后的标题">
+                            </div>
+                            <!-- 优化后内容 -->
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xs text-gray-500">内容</span>
+                                    <span class="text-[10px] text-gray-400" id="ai-optimized-content-count">0/2000</span>
+                                </div>
+                                <textarea id="optimized-content-display" rows="6" class="w-full px-3 py-2 border border-green-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none bg-white" maxlength="2000" oninput="updateAIOptContentCount()" placeholder="AI优化后的内容"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- 媒体资源对比 -->
+                        <div id="media-comparison-section" class="hidden">
+                            <h4 class="font-medium text-gray-700 mb-2">📷 图片/视频资源</h4>
+                            <div class="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                                <p class="text-sm text-blue-700 mb-2">AI将根据不同渠道自动优化图片排版和视频剪辑建议</p>
+                                <div id="optimized-media-preview" class="grid grid-cols-3 gap-2">
+                                    <!-- 动态填充 -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 优化建议 -->
+                        <div id="ai-suggestions" class="p-4 bg-orange-50 rounded-xl border border-orange-200">
+                            <h4 class="font-medium text-orange-800 mb-2">💡 优化建议</h4>
+                            <ul class="space-y-1 text-sm text-orange-700">
+                                <!-- 动态填充 -->
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- 确认按钮 -->
+                    <div class="mt-6 flex gap-3">
+                        <button type="button" onclick="reoptimizeContent()" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg font-medium hover:from-blue-600 hover:to-indigo-600 transition-all shadow-md">
+                            🔄 继续AI优化
+                        </button>
+                        <button type="button" onclick="confirmOptimization()" class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-lg font-medium hover:from-green-600 hover:to-teal-600 transition-all shadow-md">
+                            确认优化结果
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 步骤3：渠道发布 -->
+            <div class="form-step" id="step-3">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">选择发布渠道</h2>
+                <p class="text-gray-600 mb-6">点击渠道查看并编辑专属文案，勾选渠道进行发布</p>
+                
+                <!-- 渠道选择网格 -->
+                <div class="grid grid-cols-3 gap-3 mb-6">
+                    <!-- 社区公告栏 -->
+                    <div class="channel-select-card relative p-3 rounded-xl border-2 border-orange-500 bg-orange-50 cursor-pointer transition-all" data-channel="community" onclick="selectChannel('community')">
+                        <div class="absolute top-2 right-2">
+                            <input type="checkbox" name="channels" value="community" checked class="channel-select-checkbox h-4 w-4 text-orange-600 rounded focus:ring-orange-500" onclick="event.stopPropagation(); toggleChannelCheckbox('community')">
+                        </div>
+                        <div class="flex flex-col items-center text-center pt-1">
+                            <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mb-2">
+                                <svg class="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-sm mb-0.5">社区公告栏</h3>
+                            <p class="text-[10px] text-gray-500">所有居民可见</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 朋友圈 -->
+                    <div class="channel-select-card relative p-3 rounded-xl border-2 border-gray-200 bg-white cursor-pointer transition-all hover:border-orange-300" data-channel="moments" onclick="selectChannel('moments')">
+                        <div class="absolute top-2 right-2">
+                            <input type="checkbox" name="channels" value="moments" class="channel-select-checkbox h-4 w-4 text-orange-600 rounded focus:ring-orange-500" onclick="event.stopPropagation(); toggleChannelCheckbox('moments')">
+                        </div>
+                        <div class="flex flex-col items-center text-center pt-1">
+                            <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mb-2">
+                                <svg class="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-sm mb-0.5">朋友圈</h3>
+                            <p class="text-[10px] text-gray-500">扩大传播范围</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 社区群聊 -->
+                    <div class="channel-select-card relative p-3 rounded-xl border-2 border-gray-200 bg-white cursor-pointer transition-all hover:border-orange-300" data-channel="groups" onclick="selectChannel('groups')">
+                        <div class="absolute top-2 right-2">
+                            <input type="checkbox" name="channels" value="groups" class="channel-select-checkbox h-4 w-4 text-orange-600 rounded focus:ring-orange-500" onclick="event.stopPropagation(); toggleChannelCheckbox('groups')">
+                        </div>
+                        <div class="flex flex-col items-center text-center pt-1">
+                            <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mb-2">
+                                <svg class="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-sm mb-0.5">社区群聊</h3>
+                            <p class="text-[10px] text-gray-500">精准触达邻居</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 小红书 -->
+                    <div class="channel-select-card relative p-3 rounded-xl border-2 border-gray-200 bg-white cursor-pointer transition-all hover:border-orange-300" data-channel="xiaohongshu" onclick="selectChannel('xiaohongshu')">
+                        <div class="absolute top-2 right-2">
+                            <input type="checkbox" name="channels" value="xiaohongshu" class="channel-select-checkbox h-4 w-4 text-orange-600 rounded focus:ring-orange-500" onclick="event.stopPropagation(); toggleChannelCheckbox('xiaohongshu')">
+                        </div>
+                        <div class="flex flex-col items-center text-center pt-1">
+                            <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center mb-2">
+                                <svg class="w-5 h-5 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-sm mb-0.5">小红书</h3>
+                            <p class="text-[10px] text-gray-500">种草引流</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 视频号 -->
+                    <div class="channel-select-card relative p-3 rounded-xl border-2 border-gray-200 bg-white cursor-pointer transition-all hover:border-orange-300" data-channel="shipinhao" onclick="selectChannel('shipinhao')">
+                        <div class="absolute top-2 right-2">
+                            <input type="checkbox" name="channels" value="shipinhao" class="channel-select-checkbox h-4 w-4 text-orange-600 rounded focus:ring-orange-500" onclick="event.stopPropagation(); toggleChannelCheckbox('shipinhao')">
+                        </div>
+                        <div class="flex flex-col items-center text-center pt-1">
+                            <div class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center mb-2">
+                                <svg class="w-5 h-5 text-orange-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-sm mb-0.5">视频号</h3>
+                            <p class="text-[10px] text-gray-500">视频传播</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 抖音 -->
+                    <div class="channel-select-card relative p-3 rounded-xl border-2 border-gray-200 bg-white cursor-pointer transition-all hover:border-orange-300" data-channel="douyin" onclick="selectChannel('douyin')">
+                        <div class="absolute top-2 right-2">
+                            <input type="checkbox" name="channels" value="douyin" class="channel-select-checkbox h-4 w-4 text-orange-600 rounded focus:ring-orange-500" onclick="event.stopPropagation(); toggleChannelCheckbox('douyin')">
+                        </div>
+                        <div class="flex flex-col items-center text-center pt-1">
+                            <div class="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center mb-2">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 text-sm mb-0.5">抖音</h3>
+                            <p class="text-[10px] text-gray-500">短视频引流</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 渠道内容编辑区域 -->
+                <div id="channel-content-editor" class="mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-semibold text-gray-900">📝 营销内容编辑</h3>
+                        <span id="current-channel-label" class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">社区公告栏</span>
+                    </div>
+                    
+                    <!-- 动态内容编辑区 -->
+                    <div class="bg-white rounded-xl border-2 border-orange-200 overflow-hidden">
+                        <div class="p-4">
+                            <input type="text" id="current-channel-title" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm mb-3 focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="请输入标题" maxlength="100" oninput="updateChannelTitleCount()">
+                            <p class="text-[10px] text-gray-500 -mt-2 mb-3 flex justify-end">
+                                <span id="channel-title-count" class="text-gray-400">0/100</span>
+                            </p>
+                            <textarea id="current-channel-content" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" rows="10" placeholder="请输入内容" maxlength="2000" oninput="updateChannelContentCount()"></textarea>
+                            <p class="text-[10px] text-gray-500 mt-1 flex justify-end">
+                                <span id="channel-content-count" class="text-gray-400">0/2000</span>
+                            </p>
+                            <div id="current-channel-media" class="mt-3 flex flex-wrap gap-2"></div>
+                        </div>
+                        <div class="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+                            <span class="text-xs text-gray-500">点击上方渠道切换编辑内容</span>
+                            <button type="button" onclick="resetCurrentChannelContent()" class="text-xs px-3 py-1.5 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600">
+                                ↺ 重置当前渠道内容
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 发布设置 -->
+                <div class="bg-gray-50 rounded-xl p-4">
+                    <h3 class="font-semibold text-gray-900 mb-3">⚙️ 发布设置</h3>
+                    <div class="space-y-3">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="save-draft" value="1" class="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded">
+                            <span class="ml-2 text-sm text-gray-700">同时保存为草稿</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="schedule-publish" value="1" class="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded">
+                            <span class="ml-2 text-sm text-gray-700">定时发布</span>
+                        </label>
+                        <div id="schedule-time-container" class="hidden ml-6">
+                            <input type="datetime-local" name="schedule-time" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 底部按钮区域 - 移动端优化 -->
+            <div class="flex flex-col sm:flex-row justify-between pt-4 border-t border-gray-200 gap-3">
+                <div class="flex gap-2 order-2 sm:order-1">
+                    <button type="button" id="prev-btn" onclick="prevStep()" class="flex-1 sm:flex-none px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors hidden text-sm">
+                        上一步
+                    </button>
+                    <button type="button" id="save-draft-btn" onclick="saveDraft()" class="flex-1 sm:flex-none px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors text-sm">
+                        保存草稿
+                    </button>
+                </div>
+                <div class="flex gap-2 order-1 sm:order-2">
+                    <button type="button" onclick="previewPost()" class="px-4 py-2.5 bg-orange-100 text-orange-700 rounded-lg font-medium hover:bg-orange-200 transition-colors text-sm">
+                        预览
+                    </button>
+                    <button type="button" id="next-btn" onclick="nextStep()" class="flex-1 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-medium hover:from-orange-600 hover:to-red-600 transition-all shadow-md text-sm">
+                        AI优化
+                    </button>
+                    <button type="submit" id="submit-btn" class="hidden flex-1 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-medium hover:from-orange-600 hover:to-red-600 transition-all shadow-md text-sm">
+                        一键发布
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- 预览弹窗 -->
+    <div id="preview-modal" class="preview-modal">
+        <div class="preview-content">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="font-bold text-lg">预览效果</h3>
+                <button onclick="closePreview()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center mb-4">
+                    <img id="preview-avatar" src="" alt="商家头像" class="w-10 h-10 rounded-full mr-3">
+                    <div>
+                        <p id="preview-merchant" class="font-semibold text-gray-900"></p>
+                        <p class="text-xs text-gray-500">刚刚</p>
+                    </div>
+                </div>
+                <h4 id="preview-title" class="font-bold text-lg mb-2"></h4>
+                <p id="preview-content" class="text-gray-700 mb-4 whitespace-pre-wrap"></p>
+                <div id="preview-media" class="grid grid-cols-3 gap-2 mb-4"></div>
+                <div id="preview-tags" class="flex flex-wrap gap-2 mb-4"></div>
+                <div class="flex items-center text-gray-500 text-sm">
+                    <span class="mr-4">👁 0</span>
+                    <span class="mr-4">❤️ 0</span>
+                    <span>💬 0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/api.js"></script>
+    <script>
+        // 全局变量
+        let currentStep = 1;
+        let selectedTemplate = null;
+        let uploadedMedia = [];
+        let selectedTags = [];
+        let isRecording = false;
+        let recognition = null;
+
+        // 检查登录状态
+        function checkLoginStatus() {
+            const currentMerchant = localStorage.getItem('current_merchant');
+            if (!currentMerchant) {
+                window.location.href = '../login-offline.html';
+                return false;
+            }
+            
+            const merchant = JSON.parse(currentMerchant);
+            document.getElementById('merchant-name').textContent = merchant.name;
+            
+            // 使用商户上传的logo，如果没有则使用默认logo
+            const logoPath = merchant.logo || merchant.avatar || '../images/logo.png';
+            document.getElementById('merchant-avatar').src = logoPath;
+            
+            return true;
+        }
+        
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('current_merchant');
+                window.location.href = '../login-offline.html';
+            }
+        }
+
+        // 跳转到商家详情页
+        function goToMerchantDetail() {
+            const currentMerchant = localStorage.getItem('current_merchant');
+            if (currentMerchant) {
+                const merchant = JSON.parse(currentMerchant);
+                // 保存当前编辑的内容，防止丢失
+                saveCurrentDraft();
+                // 跳转到商家详情页
+                window.location.href = '../../resident/view-messages/merchant-detail-offline.html?merchantId=' + merchant.id;
+            }
+        }
+
+        // 保存当前编辑的草稿
+        function saveCurrentDraft() {
+            const title = document.getElementById('post-title').value;
+            const content = document.getElementById('post-content').value;
+            
+            if (title || content || uploadedMedia.length > 0) {
+                const draft = {
+                    title,
+                    content,
+                    images: uploadedMedia,
+                    tags: selectedTags,
+                    templateType: selectedTemplate,
+                    saveTime: new Date().toISOString()
+                };
+                localStorage.setItem('temp_draft', JSON.stringify(draft));
+            }
+        }
+
+        // 跳过模板选择
+        function skipTemplate() {
+            selectedTemplate = 'custom';
+            nextStep();
+        }
+
+        // 语音输入切换
+        function toggleVoiceInput() {
+            const voiceBtn = document.getElementById('voice-btn');
+            const voiceIcon = document.getElementById('voice-icon');
+            const voiceText = document.getElementById('voice-text');
+            
+            if (!isRecording) {
+                // 开始录音
+                startVoiceInput();
+                isRecording = true;
+                voiceBtn.classList.add('voice-recording', 'border-red-400', 'bg-red-50');
+                voiceBtn.classList.remove('border-orange-200');
+                voiceText.textContent = '点击停止';
+            } else {
+                // 停止录音
+                stopVoiceInput();
+                isRecording = false;
+                voiceBtn.classList.remove('voice-recording', 'border-red-400', 'bg-red-50');
+                voiceBtn.classList.add('border-orange-200');
+                voiceText.textContent = '语音输入';
+            }
+        }
+
+        // 开始语音输入
+        function startVoiceInput() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                showToast('您的浏览器不支持语音输入');
+                return;
+            }
+            
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'zh-CN';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            
+            // 实时转写显示区域
+            let voiceTranscript = '';
+            
+            recognition.onresult = function(event) {
+                let interimTranscript = '';
+                
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        voiceTranscript += transcript;
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+                
+                // 显示实时转写结果
+                showVoiceTranscript(voiceTranscript + interimTranscript);
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('语音识别错误:', event.error);
+                showToast('语音识别出错，请重试');
+                stopVoiceInput();
+            };
+            
+            recognition.onend = function() {
+                // 语音结束，自动处理
+                if (voiceTranscript) {
+                    processVoiceResult(voiceTranscript);
+                }
+            };
+            
+            recognition.start();
+            showToast('开始语音输入，请说话...');
+            
+            // 显示实时转写区域
+            showVoiceTranscriptArea();
+        }
+
+        // 显示语音转写区域
+        function showVoiceTranscriptArea() {
+            let transcriptArea = document.getElementById('voice-transcript-area');
+            if (!transcriptArea) {
+                transcriptArea = document.createElement('div');
+                transcriptArea.id = 'voice-transcript-area';
+                transcriptArea.className = 'mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg';
+                transcriptArea.innerHTML = `
+                    <div class="flex items-center mb-2">
+                        <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse mr-2"></div>
+                        <span class="text-sm font-medium text-orange-700">正在聆听...</span>
+                    </div>
+                    <div id="voice-transcript-text" class="text-gray-700 min-h-[60px]"></div>
+                    <div class="mt-3 flex gap-2">
+                        <button onclick="confirmVoiceResult()" class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm hover:bg-orange-600">
+                            ✓ 确认使用
+                        </button>
+                        <button onclick="cancelVoiceInput()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300">
+                            ✕ 取消
+                        </button>
+                    </div>
+                `;
+                
+                const voiceSection = document.getElementById('voice-btn').closest('.mb-6');
+                voiceSection.appendChild(transcriptArea);
+            }
+            transcriptArea.classList.remove('hidden');
+        }
+
+        // 显示语音转写内容
+        function showVoiceTranscript(text) {
+            const textElement = document.getElementById('voice-transcript-text');
+            if (textElement) {
+                textElement.textContent = text;
+            }
+        }
+
+        // 确认使用语音结果
+        function confirmVoiceResult() {
+            const textElement = document.getElementById('voice-transcript-text');
+            if (textElement && textElement.textContent) {
+                processVoiceResult(textElement.textContent);
+            }
+            stopVoiceInput();
+        }
+
+        // 取消语音输入
+        function cancelVoiceInput() {
+            stopVoiceInput();
+            const transcriptArea = document.getElementById('voice-transcript-area');
+            if (transcriptArea) {
+                transcriptArea.classList.add('hidden');
+            }
+        }
+
+        // 处理语音结果 - 自动提取标题、内容、标签
+        function processVoiceResult(text) {
+            // 智能提取标题（第一句话或前20个字）
+            let title = '';
+            const sentences = text.split(/[。！？\n]/).filter(s => s.trim());
+            if (sentences.length > 0) {
+                title = sentences[0].trim().substring(0, 25);
+                if (sentences[0].trim().length > 25) {
+                    title += '...';
+                }
+            }
+            
+            // 提取标签关键词
+            const tagKeywords = {
+                '折扣': '限时折扣',
+                '优惠': '限时折扣',
+                '特价': '限时折扣',
+                '开业': '新店开业',
+                '新开张': '新店开业',
+                '服务': '上门服务',
+                '上门': '上门服务',
+                '家政': '上门服务',
+                '拼团': '拼团集赞',
+                '团购': '拼团集赞',
+                '集赞': '拼团集赞',
+                '会员': '会员专享',
+                'VIP': '会员专享',
+                '套餐': '套餐优惠',
+                '组合': '套餐优惠',
+                '节日': '节日特惠',
+                '清仓': '尾货清仓',
+                '甩卖': '尾货清仓'
+            };
+            
+            const extractedTags = [];
+            for (const [keyword, tag] of Object.entries(tagKeywords)) {
+                if (text.includes(keyword) && !extractedTags.includes(tag)) {
+                    extractedTags.push(tag);
+                }
+            }
+            
+            // 填充表单
+            if (title) {
+                document.getElementById('post-title').value = title;
+            }
+            document.getElementById('post-content').value = text;
+            
+            // 自动选择标签
+            if (extractedTags.length > 0) {
+                extractedTags.forEach(tagName => {
+                    const tagElement = Array.from(document.querySelectorAll('.tag-option')).find(
+                        el => el.textContent === tagName
+                    );
+                    if (tagElement && !tagElement.classList.contains('selected')) {
+                        toggleTag(tagElement);
+                    }
+                });
+            }
+            
+            // 隐藏转写区域
+            const transcriptArea = document.getElementById('voice-transcript-area');
+            if (transcriptArea) {
+                transcriptArea.classList.add('hidden');
+            }
+            
+            showToast('语音内容已自动填充');
+        }
+
+        // 停止语音输入
+        function stopVoiceInput() {
+            if (recognition) {
+                recognition.stop();
+                recognition = null;
+            }
+            isRecording = false;
+            
+            const voiceBtn = document.getElementById('voice-btn');
+            const voiceText = document.getElementById('voice-text');
+            if (voiceBtn) {
+                voiceBtn.classList.remove('voice-recording', 'border-red-400', 'bg-red-50');
+                voiceBtn.classList.add('border-orange-200');
+            }
+            if (voiceText) {
+                voiceText.textContent = '语音输入';
+            }
+        }
+
+        // 开始OCR识别
+        function startOCR() {
+            document.getElementById('ocr-file').click();
+        }
+
+        // 处理OCR文件
+        function handleOCRFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // 模拟OCR识别
+            showToast('正在识别图片文字...');
+            
+            setTimeout(() => {
+                const mockResults = [
+                    '新店开业大酬宾！全场商品8折优惠，欢迎新老客户光临！',
+                    '限时特价：苹果5元/斤，香蕉3元/斤，新鲜水果等你来抢！',
+                    '本店提供上门配送服务，满50元免配送费，电话：13800138000'
+                ];
+                const randomResult = mockResults[Math.floor(Math.random() * mockResults.length)];
+                
+                document.getElementById('ocr-text').textContent = randomResult;
+                document.getElementById('ocr-result-container').classList.remove('hidden');
+            }, 1500);
+        }
+
+        // 使用OCR结果
+        function useOCRResult() {
+            const ocrText = document.getElementById('ocr-text').textContent;
+            document.getElementById('post-content').value = ocrText;
+            closeOCRResult();
+            showToast('已应用到内容');
+        }
+
+        // 关闭OCR结果
+        function closeOCRResult() {
+            document.getElementById('ocr-result-container').classList.add('hidden');
+            document.getElementById('ocr-file').value = '';
+        }
+
+        // 标签切换
+        function toggleTag(element) {
+            element.classList.toggle('selected');
+            const tag = element.textContent;
+            
+            if (element.classList.contains('selected')) {
+                if (!selectedTags.includes(tag)) {
+                    selectedTags.push(tag);
+                }
+            } else {
+                selectedTags = selectedTags.filter(t => t !== tag);
+            }
+            
+            updateSelectedTags();
+        }
+
+        // 处理自定义标签
+        function handleCustomTag(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const input = event.target;
+                const tag = input.value.trim();
+                
+                if (tag && !selectedTags.includes(tag)) {
+                    selectedTags.push(tag);
+                    updateSelectedTags();
+                    input.value = '';
+                }
+            }
+        }
+
+        // 更新已选标签显示
+        function updateSelectedTags() {
+            const container = document.getElementById('selected-tags');
+            container.innerHTML = selectedTags.map(tag => `
+                <span class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm flex items-center">
+                    ${tag}
+                    <button onclick="removeTag('${tag}')" class="ml-2 text-orange-500 hover:text-orange-700">×</button>
+                </span>
+            `).join('');
+        }
+
+        // 移除标签
+        function removeTag(tag) {
+            selectedTags = selectedTags.filter(t => t !== tag);
+            updateSelectedTags();
+            
+            // 更新标签按钮状态
+            document.querySelectorAll('.tag-item').forEach(item => {
+                if (item.textContent === tag) {
+                    item.classList.remove('selected');
+                }
+            });
+        }
+
+        // 处理媒体上传
+        function handleMediaUpload(event) {
+            const files = Array.from(event.target.files);
+            
+            files.forEach(file => {
+                if (uploadedMedia.length >= 9) {
+                    showToast('最多只能上传9张图片');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedMedia.push({
+                        name: file.name,
+                        type: file.type,
+                        data: e.target.result
+                    });
+                    updateMediaPreview();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // 更新媒体预览
+        function updateMediaPreview() {
+            const container = document.getElementById('media-preview-container');
+            const grid = document.getElementById('media-preview-grid');
+            
+            if (uploadedMedia.length > 0) {
+                container.classList.remove('hidden');
+                
+                // 清空现有内容
+                grid.innerHTML = '';
+                
+                // 为每个媒体创建预览元素
+                uploadedMedia.forEach((media, index) => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'relative';
+                    
+                    const img = document.createElement('img');
+                    img.src = media.data;
+                    img.alt = media.name;
+                    img.className = 'rounded-lg max-h-32 w-auto object-contain';
+                    
+                    // 根据图片比例设置样式
+                    img.onload = function() {
+                        const aspectRatio = this.naturalWidth / this.naturalHeight;
+                        
+                        if (aspectRatio > 1.5) {
+                            // 宽图
+                            this.style.maxWidth = '200px';
+                            this.style.height = 'auto';
+                        } else if (aspectRatio < 0.7) {
+                            // 长图
+                            this.style.maxWidth = '100px';
+                            this.style.height = 'auto';
+                        } else {
+                            // 方图或接近方形
+                            this.style.maxWidth = '120px';
+                            this.style.height = 'auto';
+                        }
+                    };
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.innerHTML = '×';
+                    removeBtn.className = 'absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs hover:bg-red-600';
+                    removeBtn.onclick = function() { removeMedia(index); };
+                    
+                    wrapper.appendChild(img);
+                    wrapper.appendChild(removeBtn);
+                    grid.appendChild(wrapper);
+                });
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        // 移除媒体
+        function removeMedia(index) {
+            uploadedMedia.splice(index, 1);
+            updateMediaPreview();
+        }
+
+        // 预览功能
+        function previewPost() {
+            const title = document.getElementById('post-title').value;
+            const content = document.getElementById('post-content').value;
+            
+            if (!title && !content) {
+                showToast('请先输入标题或内容');
+                return;
+            }
+            
+            const currentMerchant = JSON.parse(localStorage.getItem('current_merchant') || '{}');
+            
+            document.getElementById('preview-avatar').src = currentMerchant.avatar || 'https://via.placeholder.com/100/ff9716/ffffff?text=商';
+            document.getElementById('preview-merchant').textContent = currentMerchant.name || '商家名称';
+            document.getElementById('preview-title').textContent = title || '无标题';
+            document.getElementById('preview-content').textContent = content || '无内容';
+            
+            // 预览媒体
+            const previewMedia = document.getElementById('preview-media');
+            if (uploadedMedia.length > 0) {
+                previewMedia.innerHTML = uploadedMedia.map(media => `
+                    <img src="${media.data}" class="w-full h-20 object-cover rounded">
+                `).join('');
+            } else {
+                previewMedia.innerHTML = '';
+            }
+            
+            // 预览标签
+            const previewTags = document.getElementById('preview-tags');
+            if (selectedTags.length > 0) {
+                previewTags.innerHTML = selectedTags.map(tag => `
+                    <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">${tag}</span>
+                `).join('');
+            } else {
+                previewTags.innerHTML = '';
+            }
+            
+            document.getElementById('preview-modal').classList.add('show');
+        }
+
+        // 关闭预览
+        function closePreview() {
+            document.getElementById('preview-modal').classList.remove('show');
+        }
+
+        // 下一步
+        function nextStep() {
+            if (currentStep === 1) {
+                const title = document.getElementById('post-title').value.trim();
+                const content = document.getElementById('post-content').value.trim();
+                
+                if (!title) {
+                    showToast('请输入营销标题');
+                    return;
+                }
+                if (!content) {
+                    showToast('请输入详情内容');
+                    return;
+                }
+                
+                // 进入第二步
+                document.getElementById(`step-${currentStep}`).classList.remove('active');
+                document.querySelector(`.step-item[data-step="${currentStep}"]`).classList.remove('active');
+                currentStep++;
+                document.getElementById(`step-${currentStep}`).classList.add('active');
+                document.querySelector(`.step-item[data-step="${currentStep}"]`).classList.add('active');
+                updateButtons();
+            } else if (currentStep === 2) {
+                // AI优化步骤 - 执行AI优化并显示对比结果
+                performAIOptimization();
+            } else if (currentStep === 3) {
+                // 第三步直接提交
+                submitForm();
+            }
+        }
+
+        // 执行AI优化并显示对比结果
+        function performAIOptimization() {
+            const title = document.getElementById('post-title').value;
+            const content = document.getElementById('post-content').value;
+            
+            // 显示优化中提示
+            showToast('AI正在优化内容...');
+            
+            // 模拟AI优化过程
+            setTimeout(() => {
+                // 初始化所有渠道的默认优化内容
+                const channels = ['community', 'moments', 'groups', 'xiaohongshu', 'shipinhao', 'douyin'];
+                channels.forEach(channel => {
+                    if (!channelContentsData[channel]) {
+                        channelContentsData[channel] = getDefaultChannelContent(channel);
+                    }
+                });
+                
+                // 显示优化结果对比
+                displayAIOptimizationResult(title, content);
+                
+                showToast('AI优化完成！请查看对比结果');
+            }, 800);
+        }
+        
+        // 显示AI优化对比结果
+        function displayAIOptimizationResult(originalTitle, originalContent) {
+            // 获取社区公告栏的优化内容作为示例展示
+            const optimized = channelContentsData['community'] || getDefaultChannelContent('community');
+            
+            // 填充原文
+            document.getElementById('original-title-display').value = originalTitle;
+            document.getElementById('original-content-display').value = originalContent;
+            
+            // 填充优化后内容
+            document.getElementById('optimized-title-display').value = optimized.title;
+            document.getElementById('optimized-content-display').value = optimized.content;
+            
+            // 初始化字数统计
+            updateAIOriTitleCount();
+            updateAIOriContentCount();
+            updateAIOptTitleCount();
+            updateAIOptContentCount();
+            
+            // 显示媒体资源
+            const mediaSection = document.getElementById('media-comparison-section');
+            const mediaPreview = document.getElementById('optimized-media-preview');
+            if (uploadedMedia.length > 0) {
+                mediaSection.classList.remove('hidden');
+                mediaPreview.innerHTML = uploadedMedia.map((media, index) => {
+                    const aspectRatio = media.width / media.height;
+                    let widthClass = 'max-w-[120px]';
+                    if (aspectRatio > 1.5) widthClass = 'max-w-[200px]';
+                    else if (aspectRatio < 0.7) widthClass = 'max-w-[100px]';
+                    
+                    return `
+                        <div class="relative ${widthClass}">
+                            <img src="${media.data}" class="w-full h-auto rounded-lg border border-gray-200">
+                            <span class="absolute top-0 right-0 bg-blue-500 text-white text-[10px] px-1 rounded">AI优化</span>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                mediaSection.classList.add('hidden');
+            }
+            
+            // 显示优化建议
+            const suggestionsContainer = document.querySelector('#ai-suggestions ul');
+            let suggestionsHtml = '';
+            suggestionsHtml += `<li>✅ 已优化 6 个发布渠道</li>`;
+            suggestionsHtml += `<li>📝 标题优化：增强吸引力，符合社区场景</li>`;
+            suggestionsHtml += `<li>💡 内容优化：添加表情符号，提升可读性</li>`;
+            suggestionsHtml += `<li>🔍 合规检查：未发现违规词汇</li>`;
+            suggestionsHtml += `<li>📱 社区公告栏：正式、详细、信息完整</li>`;
+            suggestionsHtml += `<li>📱 朋友圈：轻松、有趣、易传播</li>`;
+            suggestionsHtml += `<li>📱 小红书：种草风、真实分享</li>`;
+            suggestionsContainer.innerHTML = suggestionsHtml;
+            
+            // 显示优化结果区域
+            document.getElementById('ai-optimization-result').classList.remove('hidden');
+            document.getElementById('ai-options-section').classList.add('hidden');
+            
+            // 隐藏下一步按钮，显示确认按钮
+            document.getElementById('next-btn').classList.add('hidden');
+        }
+
+        // 执行AI优化 - 根据渠道优化文案（用于显示对比结果）
+        function performAIOptimization() {
+            const title = document.getElementById('post-title').value;
+            const content = document.getElementById('post-content').value;
+            
+            // 获取选中的渠道
+            const selectedChannels = [];
+            document.querySelectorAll('.channel-select-card').forEach(card => {
+                const checkbox = card.querySelector('.channel-select-checkbox');
+                if (checkbox && checkbox.checked) {
+                    selectedChannels.push(card.dataset.channel);
+                }
+            });
+            
+            // 渠道特定的优化策略
+            const channelOptimizations = {
+                'community': {
+                    name: '社区公告栏',
+                    style: '正式、详细、信息完整',
+                    features: ['适合长文案', '信息完整', '适合居民仔细阅读'],
+                    optimize: (title, content) => ({
+                        title: title,
+                        content: content + '\n\n📍 本店位于社区内，欢迎邻居们前来体验！如有任何问题，可随时联系店主。',
+                        tags: ['社区推荐', '邻里优惠']
+                    })
+                },
+                'moments': {
+                    name: '朋友圈',
+                    style: '轻松、有趣、易传播',
+                    features: ['简短精炼', ' emoji丰富', '适合快速浏览'],
+                    optimize: (title, content) => ({
+                        title: title.replace(/【.*?】/, ''),
+                        content: '🎉 ' + content.substring(0, 100) + (content.length > 100 ? '...' : '') + '\n\n👇 戳链接了解更多优惠！\n#社区好店 #限时优惠 #邻里推荐',
+                        tags: ['朋友圈专属', '限时福利']
+                    })
+                },
+                'groups': {
+                    name: '社区群聊',
+                    style: '亲切、互动性强',
+                    features: ['口语化', '@邻居', '互动引导'],
+                    optimize: (title, content) => ({
+                        title: '@所有人 ' + title,
+                        content: '邻居们好！👋\n\n' + content + '\n\n有需要的邻居可以联系我哦，支持送货上门！😊',
+                        tags: ['群聊专享', '送货上门']
+                    })
+                },
+                'xiaohongshu': {
+                    name: '小红书',
+                    style: '种草风、真实分享、图文并茂',
+                    features: ['种草文案', 'emoji丰富', '话题标签', '真实体验'],
+                    optimize: (title, content) => ({
+                        title: title.replace(/【.*?】/, '') + ' | 社区宝藏店铺推荐',
+                        content: '🌟 ' + content.substring(0, 150) + '\n\n✨ 真实体验分享\n💰 性价比超高\n📍 就在社区里，超方便！\n\n#社区好店 #种草 #探店 #' + title.replace(/【.*?】/, '').substring(0, 10) + ' #生活记录',
+                        tags: ['小红书专属', '种草推荐']
+                    })
+                },
+                'shipinhao': {
+                    name: '视频号',
+                    style: '视频化、口播友好、节奏感强',
+                    features: ['口播脚本', '节奏明快', '引导互动', '适合视频'],
+                    optimize: (title, content) => ({
+                        title: title.replace(/【.*?】/, ''),
+                        content: '🎬 视频口播脚本：\n\n【开场】' + title.replace(/【.*?】/, '') + '\n\n【正文】' + content.substring(0, 120) + '\n\n【结尾】喜欢的邻居们点个赞，关注我了解更多社区好店！\n\n#视频号 #社区生活 #好店推荐',
+                        tags: ['视频号专属', '口播脚本']
+                    })
+                },
+                'douyin': {
+                    name: '抖音',
+                    style: '短视频、节奏快、抓人眼球',
+                    features: ['黄金3秒', '节奏快', '强互动', '音乐感'],
+                    optimize: (title, content) => ({
+                        title: '🔥 ' + title.replace(/【.*?】/, ''),
+                        content: '⚡ 3秒抓眼球：' + title.replace(/【.*?】/, '') + '\n\n📝 快速介绍：' + content.substring(0, 80) + '\n\n💥 行动号召：\n👉 点赞关注不迷路\n👉 评论区告诉我你想了解什么\n👉 转发给需要的邻居\n\n#抖音探店 #社区好店 #同城热门 #邻里推荐',
+                        tags: ['抖音专属', '短视频']
+                    })
+                }
+            };
+            
+            // 显示优化结果对比
+            const resultContainer = document.getElementById('ai-optimization-result');
+            
+            // 显示原文（使用value因为是input/textarea）
+            document.getElementById('original-title-display').value = title;
+            document.getElementById('original-content-display').value = content;
+            
+            // 显示优化后（以社区公告栏为示例，或综合优化）
+            const optimized = channelOptimizations['community'].optimize(title, content);
+            document.getElementById('optimized-title-display').value = optimized.title;
+            document.getElementById('optimized-content-display').value = optimized.content;
+            
+            // 初始化字数统计
+            updateAIOriTitleCount();
+            updateAIOriContentCount();
+            updateAIOptTitleCount();
+            updateAIOptContentCount();
+            
+            // 显示媒体资源对比
+            const mediaSection = document.getElementById('media-comparison-section');
+            const mediaPreview = document.getElementById('optimized-media-preview');
+            if (uploadedMedia.length > 0) {
+                mediaSection.classList.remove('hidden');
+                mediaPreview.innerHTML = uploadedMedia.map((media, index) => `
+                    <div class="relative">
+                        <img src="${media.data}" class="w-full h-16 object-cover rounded-lg">
+                        <span class="absolute top-0 right-0 bg-blue-500 text-white text-xs px-1 rounded">AI优化</span>
+                    </div>
+                `).join('');
+            } else {
+                mediaSection.classList.add('hidden');
+            }
+            
+            // 显示优化建议
+            const suggestionsContainer = document.querySelector('#ai-suggestions ul');
+            let suggestionsHtml = '';
+            
+            if (selectedChannels.length === 0) {
+                suggestionsHtml = '<li>请选择发布渠道以查看AI优化建议</li>';
+            } else {
+                suggestionsHtml += `<li>✅ 已优化 ${selectedChannels.length} 个发布渠道</li>`;
+                suggestionsHtml += `<li>📝 标题优化：增强吸引力，符合社区场景</li>`;
+                suggestionsHtml += `<li>💡 内容优化：添加表情符号，提升可读性</li>`;
+                suggestionsHtml += `<li>🔍 合规检查：未发现违规词汇</li>`;
+                selectedChannels.forEach(channel => {
+                    const opt = channelOptimizations[channel];
+                    if (opt) {
+                        suggestionsHtml += `<li>📱 ${opt.name}：${opt.style}</li>`;
+                    }
+                });
+            }
+            
+            suggestionsContainer.innerHTML = suggestionsHtml;
+            resultContainer.classList.remove('hidden');
+            
+            // 隐藏优化选项和"AI优化"按钮
+            document.getElementById('ai-options-section').classList.add('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+            
+            // 自动填充渠道内容
+            setTimeout(() => {
+                updateChannelContents();
+            }, 100);
+            
+            showToast('AI优化完成，请查看对比结果');
+        }
+
+        // 应用渠道优化
+        function applyChannelOptimization(channel) {
+            const title = document.getElementById('post-title').value;
+            const content = document.getElementById('post-content').value;
+            
+            const optimizations = {
+                'community': {
+                    title: title,
+                    content: content + '\n\n📍 本店位于社区内，欢迎邻居们前来体验！如有任何问题，可随时联系店主。'
+                },
+                'moments': {
+                    title: title.replace(/【.*?】/, ''),
+                    content: '🎉 ' + content.substring(0, 100) + (content.length > 100 ? '...' : '') + '\n\n👇 戳链接了解更多优惠！\n#社区好店 #限时优惠 #邻里推荐'
+                },
+                'groups': {
+                    title: '@所有人 ' + title,
+                    content: '邻居们好！👋\n\n' + content + '\n\n有需要的邻居可以联系我哦，支持送货上门！😊'
+                },
+                'xiaohongshu': {
+                    title: title.replace(/【.*?】/, '') + ' | 社区宝藏店铺推荐',
+                    content: '🌟 ' + content.substring(0, 150) + '\n\n✨ 真实体验分享\n💰 性价比超高\n📍 就在社区里，超方便！\n\n#社区好店 #种草 #探店 #生活记录'
+                },
+                'shipinhao': {
+                    title: title.replace(/【.*?】/, ''),
+                    content: '🎬 视频口播脚本：\n\n【开场】' + title.replace(/【.*?】/, '') + '\n\n【正文】' + content.substring(0, 120) + '\n\n【结尾】喜欢的邻居们点个赞，关注我了解更多社区好店！\n\n#视频号 #社区生活 #好店推荐'
+                },
+                'douyin': {
+                    title: '🔥 ' + title.replace(/【.*?】/, ''),
+                    content: '⚡ 3秒抓眼球：' + title.replace(/【.*?】/, '') + '\n\n📝 快速介绍：' + content.substring(0, 80) + '\n\n💥 行动号召：\n👉 点赞关注不迷路\n👉 评论区告诉我你想了解什么\n👉 转发给需要的邻居\n\n#抖音探店 #社区好店 #同城热门 #邻里推荐'
+                }
+            };
+            
+            const optimized = optimizations[channel];
+            if (optimized) {
+                document.getElementById('post-title').value = optimized.title;
+                document.getElementById('post-content').value = optimized.content;
+                showToast('已应用优化方案');
+            }
+        }
+
+        // 恢复渠道默认内容
+        function resetChannelContent(channel) {
+            const title = document.getElementById('post-title').value;
+            const content = document.getElementById('post-content').value;
+            
+            const optimizations = {
+                'community': {
+                    title: title,
+                    content: content + '\n\n📍 本店位于社区内，欢迎邻居们前来体验！如有任何问题，可随时联系店主。'
+                },
+                'moments': {
+                    title: title.replace(/【.*?】/, ''),
+                    content: '🎉 ' + content.substring(0, 100) + (content.length > 100 ? '...' : '') + '\n\n👇 戳链接了解更多优惠！\n#社区好店 #限时优惠 #邻里推荐'
+                },
+                'groups': {
+                    title: '@所有人 ' + title,
+                    content: '邻居们好！👋\n\n' + content + '\n\n有需要的邻居可以联系我哦，支持送货上门！😊'
+                },
+                'xiaohongshu': {
+                    title: title.replace(/【.*?】/, '') + ' | 社区宝藏店铺推荐',
+                    content: '🌟 ' + content.substring(0, 150) + '\n\n✨ 真实体验分享\n💰 性价比超高\n📍 就在社区里，超方便！\n\n#社区好店 #种草 #探店 #生活记录'
+                },
+                'shipinhao': {
+                    title: title.replace(/【.*?】/, ''),
+                    content: '🎬 视频口播脚本：\n\n【开场】' + title.replace(/【.*?】/, '') + '\n\n【正文】' + content.substring(0, 120) + '\n\n【结尾】喜欢的邻居们点个赞，关注我了解更多社区好店！\n\n#视频号 #社区生活 #好店推荐'
+                },
+                'douyin': {
+                    title: '🔥 ' + title.replace(/【.*?】/, ''),
+                    content: '⚡ 3秒抓眼球：' + title.replace(/【.*?】/, '') + '\n\n📝 快速介绍：' + content.substring(0, 80) + '\n\n💥 行动号召：\n👉 点赞关注不迷路\n👉 评论区告诉我你想了解什么\n👉 转发给需要的邻居\n\n#抖音探店 #社区好店 #同城热门 #邻里推荐'
+                }
+            };
+            
+            const optimized = optimizations[channel];
+            if (optimized) {
+                // 使用新的选择器查找渠道内容卡片
+                const card = document.querySelector(`.channel-content-card[data-channel="${channel}"]`);
+                if (card) {
+                    const titleInput = card.querySelector('.channel-title-input');
+                    const contentInput = card.querySelector('.channel-content-input');
+                    if (titleInput) titleInput.value = optimized.title;
+                    if (contentInput) contentInput.value = optimized.content;
+                }
+                showToast('已恢复默认内容');
+            }
+        }
+
+        // 预览渠道内容
+        function previewChannelContent(channel) {
+            // 使用新的选择器查找渠道内容卡片
+            const card = document.querySelector(`.channel-content-card[data-channel="${channel}"]`);
+            if (card) {
+                const titleInput = card.querySelector('.channel-title-input');
+                const contentInput = card.querySelector('.channel-content-input');
+                const title = titleInput ? titleInput.value : '';
+                const content = contentInput ? contentInput.value : '';
+                
+                const currentMerchant = JSON.parse(localStorage.getItem('current_merchant') || '{}');
+                
+                document.getElementById('preview-avatar').src = currentMerchant.avatar || 'https://via.placeholder.com/100/ff9716/ffffff?text=商';
+                document.getElementById('preview-merchant').textContent = currentMerchant.name || '商家名称';
+                document.getElementById('preview-title').textContent = title;
+                document.getElementById('preview-content').textContent = content;
+                
+                // 预览媒体
+                const previewMedia = document.getElementById('preview-media');
+                if (uploadedMedia.length > 0) {
+                    previewMedia.innerHTML = uploadedMedia.map(media => `
+                        <img src="${media.data}" class="w-full h-20 object-cover rounded">
+                    `).join('');
+                } else {
+                    previewMedia.innerHTML = '';
+                }
+                
+                // 预览标签
+                const previewTags = document.getElementById('preview-tags');
+                if (selectedTags.length > 0) {
+                    previewTags.innerHTML = selectedTags.map(tag => `
+                        <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">${tag}</span>
+                    `).join('');
+                } else {
+                    previewTags.innerHTML = '';
+                }
+                
+                document.getElementById('preview-modal').classList.add('show');
+            }
+        }
+
+        // 上一步
+        function prevStep() {
+            document.getElementById(`step-${currentStep}`).classList.remove('active');
+            document.querySelector(`.step-item[data-step="${currentStep}"]`).classList.remove('active');
+            
+            currentStep--;
+            
+            document.getElementById(`step-${currentStep}`).classList.add('active');
+            document.querySelector(`.step-item[data-step="${currentStep}"]`).classList.add('active');
+            
+            updateButtons();
+        }
+
+        // 更新按钮状态
+        function updateButtons() {
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const submitBtn = document.getElementById('submit-btn');
+            
+            if (currentStep === 1) {
+                prevBtn.classList.add('hidden');
+            } else {
+                prevBtn.classList.remove('hidden');
+            }
+            
+            if (currentStep === 2) {
+                // AI优化页面 - 显示"下一步"按钮
+                nextBtn.textContent = '下一步';
+                nextBtn.className = 'px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-indigo-600 transition-all shadow-md';
+                submitBtn.classList.add('hidden');
+            } else if (currentStep === 3) {
+                // 渠道编辑页面 - 显示"一键发布"按钮
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                // 第一步
+                nextBtn.textContent = '下一步';
+                nextBtn.className = 'px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-medium hover:from-orange-600 hover:to-red-600 transition-all shadow-md';
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+        
+        // 确认AI优化结果
+        function confirmOptimization() {
+            // 获取用户编辑后的优化内容
+            const editedOptimizedTitle = document.getElementById('optimized-title-display').value;
+            const editedOptimizedContent = document.getElementById('optimized-content-display').value;
+            
+            // 更新主表单的内容为优化后的内容
+            document.getElementById('post-title').value = editedOptimizedTitle;
+            document.getElementById('post-content').value = editedOptimizedContent;
+            
+            // 更新字数统计
+            updateTitleCount();
+            updateContentCount();
+            
+            document.getElementById(`step-${currentStep}`).classList.remove('active');
+            document.querySelector(`.step-item[data-step="${currentStep}"]`).classList.remove('active');
+            currentStep++;
+            document.getElementById(`step-${currentStep}`).classList.add('active');
+            document.querySelector(`.step-item[data-step="${currentStep}"]`).classList.add('active');
+            updateButtons();
+            
+            // 进入第3步时，初始化渠道内容
+            setTimeout(() => {
+                updateChannelContents();
+            }, 100);
+        }
+        
+        // 重新优化内容（继续AI优化）
+        function reoptimizeContent() {
+            // 获取用户编辑后的原文和优化内容
+            const editedOriginalTitle = document.getElementById('original-title-display').value;
+            const editedOriginalContent = document.getElementById('original-content-display').value;
+            const editedOptimizedTitle = document.getElementById('optimized-title-display').value;
+            const editedOptimizedContent = document.getElementById('optimized-content-display').value;
+            
+            // 显示加载状态
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="animate-spin inline-block mr-2">🔄</span>AI优化中...';
+            btn.disabled = true;
+            
+            // 模拟AI继续优化过程（基于用户编辑后的内容）
+            setTimeout(() => {
+                // 基于用户编辑的优化内容进行进一步优化
+                const furtherOptimized = {
+                    title: editedOptimizedTitle + ' ✨',
+                    content: editedOptimizedContent + '\n\n💡 【智能补充】根据您的编辑，AI已进一步优化内容结构，增强营销吸引力。'
+                };
+                
+                // 更新优化后的内容显示
+                document.getElementById('optimized-title-display').value = furtherOptimized.title;
+                document.getElementById('optimized-content-display').value = furtherOptimized.content;
+                
+                // 更新字数统计
+                updateAIOptTitleCount();
+                updateAIOptContentCount();
+                
+                // 更新优化建议
+                const suggestionsContainer = document.querySelector('#ai-suggestions ul');
+                let suggestionsHtml = '';
+                suggestionsHtml += `<li>✅ 已基于您的编辑进行深度优化</li>`;
+                suggestionsHtml += `<li>📝 标题增强：添加吸引力标识</li>`;
+                suggestionsHtml += `<li>💡 内容补充：增加智能推荐语</li>`;
+                suggestionsHtml += `<li>🎯 营销优化：强化行动号召力</li>`;
+                suggestionsContainer.innerHTML = suggestionsHtml;
+                
+                // 恢复按钮状态
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                
+                showToast('AI继续优化完成！');
+                
+                // 更新渠道内容数据
+                channelContentsData = {};
+            }, 1200);
+        }
+
+        // 保存草稿
+        function saveDraft() {
+            const draft = {
+                id: Date.now(),
+                template: selectedTemplate,
+                title: document.getElementById('post-title').value,
+                content: document.getElementById('post-content').value,
+                media: uploadedMedia,
+                tags: selectedTags,
+                createTime: new Date().toISOString()
+            };
+            
+            const drafts = JSON.parse(localStorage.getItem('drafts') || '[]');
+            drafts.push(draft);
+            localStorage.setItem('drafts', JSON.stringify(drafts));
+            
+            showToast('草稿已保存');
+        }
+
+        // 显示草稿
+        function showDrafts() {
+            window.location.href = 'drafts-offline.html';
+        }
+
+        // 显示统计
+        function showStatistics() {
+            window.location.href = 'statistics-offline.html';
+        }
+
+        // 处理表单提交
+        function handleSubmit(e) {
+            e.preventDefault();
+            
+            // 先保存当前正在编辑的渠道内容
+            saveCurrentChannelContent();
+            
+            const currentMerchant = JSON.parse(localStorage.getItem('current_merchant') || '{}');
+            const title = document.getElementById('post-title').value;
+            const content = document.getElementById('post-content').value;
+            
+            // 获取选中的渠道
+            const selectedChannels = [];
+            document.querySelectorAll('.channel-select-card').forEach(card => {
+                const checkbox = card.querySelector('.channel-select-checkbox');
+                if (checkbox && checkbox.checked) {
+                    selectedChannels.push(card.dataset.channel);
+                }
+            });
+            
+            // 检查是否选择了至少一个渠道
+            if (selectedChannels.length === 0) {
+                showToast('请至少选择一个发布渠道');
+                return;
+            }
+            
+            // 获取各渠道的定制内容（从channelContentsData中）
+            const channelContents = {};
+            selectedChannels.forEach(channel => {
+                if (channelContentsData[channel]) {
+                    channelContents[channel] = channelContentsData[channel];
+                } else {
+                    // 如果没有编辑过，使用默认内容
+                    channelContents[channel] = getDefaultChannelContent(channel);
+                }
+            });
+            
+            // 构建活动数据
+            const activity = {
+                id: Date.now(),
+                merchantId: currentMerchant.id,
+                merchantName: currentMerchant.name,
+                merchantAvatar: currentMerchant.avatar,
+                title: title,
+                content: content,
+                channelContents: channelContents,
+                channels: selectedChannels,
+                images: uploadedMedia.map(m => m.data),
+                tags: selectedTags,
+                templateType: selectedTemplate,
+                views: 0,
+                likes: 0,
+                shares: 0,
+                comments: 0,
+                orders: 0,
+                status: 1,
+                createTime: new Date().toISOString()
+            };
+            
+            // 保存到本地存储
+            const activities = JSON.parse(localStorage.getItem('activities') || '[]');
+            activities.push(activity);
+            localStorage.setItem('activities', JSON.stringify(activities));
+            
+            showToast('发布成功！');
+            
+            // 重置表单并跳转到统计页
+            setTimeout(() => {
+                resetFormData();
+                window.location.href = 'statistics-offline.html';
+            }, 1500);
+        }
+
+        // 重置表单数据（无确认弹窗）
+        function resetFormData() {
+            document.getElementById('post-form').reset();
+            uploadedMedia = [];
+            selectedTags = [];
+            selectedTemplate = null;
+            updateMediaPreview();
+            updateSelectedTags();
+            
+            // 重置步骤
+            document.getElementById(`step-${currentStep}`).classList.remove('active');
+            document.querySelector(`.step-item[data-step="${currentStep}"]`).classList.remove('active');
+            currentStep = 1;
+            document.getElementById('step-1').classList.add('active');
+            document.querySelector('.step-item[data-step="1"]').classList.add('active');
+            updateButtons();
+            
+            // 重置模板选择
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            // 重置AI优化结果
+            document.getElementById('ai-optimization-result').classList.add('hidden');
+            document.getElementById('ai-options-section').classList.remove('hidden');
+        }
+
+        // 重置表单（带确认弹窗，用于手动重置）
+        function resetForm() {
+            if (confirm('确定要重置表单吗？已输入的内容将丢失。')) {
+                resetFormData();
+            }
+        }
+
+        // 显示提示
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // 切换渠道选择
+        // 当前选中的渠道
+        let currentSelectedChannel = 'community';
+        
+        // 渠道内容存储
+        let channelContentsData = {};
+        
+        // 选择渠道（点击卡片）
+        function selectChannel(channel) {
+            // 保存当前渠道的内容
+            saveCurrentChannelContent();
+            
+            // 更新当前选中渠道
+            currentSelectedChannel = channel;
+            
+            // 更新所有卡片样式
+            document.querySelectorAll('.channel-select-card').forEach(card => {
+                const isSelected = card.dataset.channel === channel;
+                if (isSelected) {
+                    card.classList.add('ring-2', 'ring-orange-400', 'ring-offset-2');
+                } else {
+                    card.classList.remove('ring-2', 'ring-orange-400', 'ring-offset-2');
+                }
+            });
+            
+            // 加载渠道内容
+            loadChannelContent(channel);
+        }
+        
+        // 切换渠道勾选状态（点击复选框）
+        function toggleChannelCheckbox(channel) {
+            const card = document.querySelector(`.channel-select-card[data-channel="${channel}"]`);
+            const checkbox = card.querySelector('.channel-select-checkbox');
+            
+            updateChannelCardStyle(card, checkbox.checked);
+            
+            // 如果勾选的是当前未选中的渠道，自动切换到该渠道
+            if (checkbox.checked && currentSelectedChannel !== channel) {
+                selectChannel(channel);
+            }
+        }
+        
+        // 更新渠道卡片样式
+        function updateChannelCardStyle(card, isSelected) {
+            if (isSelected) {
+                card.classList.remove('border-gray-200', 'bg-white');
+                card.classList.add('border-orange-500', 'bg-orange-50');
+            } else {
+                card.classList.remove('border-orange-500', 'bg-orange-50');
+                card.classList.add('border-gray-200', 'bg-white');
+            }
+        }
+        
+        // 保存当前渠道内容
+        function saveCurrentChannelContent() {
+            const title = document.getElementById('current-channel-title').value;
+            const content = document.getElementById('current-channel-content').value;
+            
+            channelContentsData[currentSelectedChannel] = {
+                title: title,
+                content: content
+            };
+        }
+        
+        // 加载渠道内容
+        function loadChannelContent(channel) {
+            const channelNames = {
+                'community': '社区公告栏',
+                'moments': '朋友圈',
+                'groups': '社区群聊',
+                'xiaohongshu': '小红书',
+                'shipinhao': '视频号',
+                'douyin': '抖音'
+            };
+            
+            // 更新标签
+            document.getElementById('current-channel-label').textContent = channelNames[channel];
+            
+            // 获取该渠道的内容
+            let content = channelContentsData[channel];
+            
+            // 如果没有保存的内容，使用AI优化的默认内容
+            if (!content) {
+                content = getDefaultChannelContent(channel);
+                channelContentsData[channel] = content;
+            }
+            
+            // 填充到编辑区
+            document.getElementById('current-channel-title').value = content.title || '';
+            document.getElementById('current-channel-content').value = content.content || '';
+            
+            // 更新字数统计
+            updateChannelTitleCount();
+            updateChannelContentCount();
+            
+            // 更新媒体预览
+            updateCurrentChannelMedia();
+        }
+        
+        // 获取默认渠道内容（AI优化后的）
+        function getDefaultChannelContent(channel) {
+            const title = document.getElementById('post-title').value;
+            const content = document.getElementById('post-content').value;
+            
+            const optimizations = {
+                'community': {
+                    title: title,
+                    content: content + '\n\n📍 本店位于社区内，欢迎邻居们前来体验！如有任何问题，可随时联系店主。'
+                },
+                'moments': {
+                    title: title.replace(/【.*?】/, ''),
+                    content: '🎉 ' + content.substring(0, 100) + (content.length > 100 ? '...' : '') + '\n\n👇 戳链接了解更多优惠！\n#社区好店 #限时优惠 #邻里推荐'
+                },
+                'groups': {
+                    title: '@所有人 ' + title,
+                    content: '邻居们好！👋\n\n' + content + '\n\n有需要的邻居可以联系我哦，支持送货上门！😊'
+                },
+                'xiaohongshu': {
+                    title: title.replace(/【.*?】/, '') + ' | 社区宝藏店铺推荐',
+                    content: '🌟 ' + content.substring(0, 150) + '\n\n✨ 真实体验分享\n💰 性价比超高\n📍 就在社区里，超方便！\n\n#社区好店 #种草 #探店 #生活记录'
+                },
+                'shipinhao': {
+                    title: title.replace(/【.*?】/, ''),
+                    content: '🎬 视频口播脚本：\n\n【开场】' + title.replace(/【.*?】/, '') + '\n\n【正文】' + content.substring(0, 120) + '\n\n【结尾】喜欢的邻居们点个赞，关注我了解更多社区好店！\n\n#视频号 #社区生活 #好店推荐'
+                },
+                'douyin': {
+                    title: '🔥 ' + title.replace(/【.*?】/, ''),
+                    content: '⚡ 3秒抓眼球：' + title.replace(/【.*?】/, '') + '\n\n📝 快速介绍：' + content.substring(0, 80) + '\n\n💥 行动号召：\n👉 点赞关注不迷路\n👉 评论区告诉我你想了解什么\n👉 转发给需要的邻居\n\n#抖音探店 #社区好店 #同城热门 #邻里推荐'
+                }
+            };
+            
+            return optimizations[channel] || { title: title, content: content };
+        }
+        
+        // 更新当前渠道媒体预览
+        function updateCurrentChannelMedia() {
+            const container = document.getElementById('current-channel-media');
+            if (uploadedMedia.length > 0) {
+                container.innerHTML = uploadedMedia.map((media, index) => {
+                    const aspectRatio = media.width / media.height;
+                    let widthClass = 'max-w-[120px]';
+                    if (aspectRatio > 1.5) widthClass = 'max-w-[200px]';
+                    else if (aspectRatio < 0.7) widthClass = 'max-w-[100px]';
+                    
+                    return `
+                        <div class="relative ${widthClass}">
+                            <img src="${media.data}" class="w-full h-auto rounded-lg border border-gray-200">
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                container.innerHTML = '';
+            }
+        }
+        
+        // 重置当前渠道内容
+        function resetCurrentChannelContent() {
+            const defaultContent = getDefaultChannelContent(currentSelectedChannel);
+            document.getElementById('current-channel-title').value = defaultContent.title;
+            document.getElementById('current-channel-content').value = defaultContent.content;
+            channelContentsData[currentSelectedChannel] = defaultContent;
+            showToast('已重置为AI优化内容');
+        }
+        
+        // 更新渠道内容区域（初始化用）
+        function updateChannelContents() {
+            // 初始化默认渠道内容
+            if (Object.keys(channelContentsData).length === 0) {
+                loadChannelContent('community');
+            }
+            
+            // 设置默认选中状态
+            selectChannel('community');
+        }
+        
+        // 创建渠道内容编辑卡片
+        function createChannelContentCard(channel) {
+            const channelNames = {
+                'community': '社区公告栏',
+                'moments': '朋友圈',
+                'groups': '社区群聊',
+                'xiaohongshu': '小红书',
+                'shipinhao': '视频号',
+                'douyin': '抖音'
+            };
+            
+            const channelColors = {
+                'community': 'green',
+                'moments': 'green',
+                'groups': 'blue',
+                'xiaohongshu': 'red',
+                'shipinhao': 'orange',
+                'douyin': 'gray'
+            };
+            
+            const color = channelColors[channel] || 'gray';
+            const name = channelNames[channel];
+            
+            const div = document.createElement('div');
+            div.className = 'channel-content-card';
+            div.dataset.channel = channel;
+            div.innerHTML = `
+                <div class="bg-white rounded-xl border-2 border-orange-200 overflow-hidden">
+                    <div class="p-4 bg-orange-50 border-b border-orange-100 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-${color}-100 rounded-lg flex items-center justify-center mr-2">
+                                <span class="text-${color}-600 font-bold text-sm">${name.charAt(0)}</span>
+                            </div>
+                            <span class="font-medium text-gray-900">${name}</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button type="button" onclick="previewChannelContent('${channel}')" class="text-xs px-3 py-1 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                                👁 预览
+                            </button>
+                            <button type="button" onclick="resetChannelContent('${channel}')" class="text-xs px-3 py-1 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                                ↺ 重置
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <input type="text" class="channel-title-input w-full px-3 py-2 border border-gray-200 rounded-lg text-sm mb-3 focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="标题" data-channel="${channel}">
+                        <textarea class="channel-content-input w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500" rows="4" placeholder="内容" data-channel="${channel}"></textarea>
+                        <div class="channel-media-preview mt-3 grid grid-cols-4 gap-2"></div>
+                    </div>
+                </div>
+            `;
+            
+            return div;
+        }
+        
+        // 展开所有渠道
+        function expandAllChannels() {
+            const container = document.getElementById('channel-contents-container');
+            const allChannels = ['community', 'moments', 'groups', 'xiaohongshu', 'shipinhao', 'douyin'];
+            
+            // 先选中所有渠道
+            allChannels.forEach(channel => {
+                const card = document.querySelector(`.channel-select-card[data-channel="${channel}"]`);
+                const checkbox = card.querySelector('.channel-select-checkbox');
+                if (!checkbox.checked) {
+                    checkbox.checked = true;
+                    updateChannelCardStyle(card, true);
+                }
+            });
+            
+            // 更新内容区域
+            updateChannelContents();
+            
+            showToast('已展开所有渠道');
+        }
+
+        // 填充渠道AI优化内容
+        function fillChannelContent(channel) {
+            const title = document.getElementById('post-title').value;
+            const content = document.getElementById('post-content').value;
+            
+            const optimizations = {
+                'community': {
+                    title: title,
+                    content: content + '\n\n📍 本店位于社区内，欢迎邻居们前来体验！如有任何问题，可随时联系店主。'
+                },
+                'moments': {
+                    title: title.replace(/【.*?】/, ''),
+                    content: '🎉 ' + content.substring(0, 100) + (content.length > 100 ? '...' : '') + '\n\n👇 戳链接了解更多优惠！\n#社区好店 #限时优惠 #邻里推荐'
+                },
+                'groups': {
+                    title: '@所有人 ' + title,
+                    content: '邻居们好！👋\n\n' + content + '\n\n有需要的邻居可以联系我哦，支持送货上门！😊'
+                },
+                'xiaohongshu': {
+                    title: title.replace(/【.*?】/, '') + ' | 社区宝藏店铺推荐',
+                    content: '🌟 ' + content.substring(0, 150) + '\n\n✨ 真实体验分享\n💰 性价比超高\n📍 就在社区里，超方便！\n\n#社区好店 #种草 #探店 #生活记录'
+                },
+                'shipinhao': {
+                    title: title.replace(/【.*?】/, ''),
+                    content: '🎬 视频口播脚本：\n\n【开场】' + title.replace(/【.*?】/, '') + '\n\n【正文】' + content.substring(0, 120) + '\n\n【结尾】喜欢的邻居们点个赞，关注我了解更多社区好店！\n\n#视频号 #社区生活 #好店推荐'
+                },
+                'douyin': {
+                    title: '🔥 ' + title.replace(/【.*?】/, ''),
+                    content: '⚡ 3秒抓眼球：' + title.replace(/【.*?】/, '') + '\n\n📝 快速介绍：' + content.substring(0, 80) + '\n\n💥 行动号召：\n👉 点赞关注不迷路\n👉 评论区告诉我你想了解什么\n👉 转发给需要的邻居\n\n#抖音探店 #社区好店 #同城热门 #邻里推荐'
+                }
+            };
+            
+            const optimized = optimizations[channel];
+            if (optimized) {
+                // 查找新的渠道内容卡片
+                const card = document.querySelector(`.channel-content-card[data-channel="${channel}"]`);
+                if (card) {
+                    const titleInput = card.querySelector('.channel-title-input');
+                    const contentInput = card.querySelector('.channel-content-input');
+                    
+                    if (titleInput) titleInput.value = optimized.title;
+                    if (contentInput) contentInput.value = optimized.content;
+                    
+                    // 填充媒体预览
+                    const mediaPreview = card.querySelector('.channel-media-preview');
+                    if (mediaPreview && uploadedMedia.length > 0) {
+                        mediaPreview.innerHTML = uploadedMedia.map((media, index) => `
+                            <div class="relative">
+                                <img src="${media.data}" class="w-full h-16 object-cover rounded-lg">
+                            </div>
+                        `).join('');
+                    }
+                }
+            }
+        }
+
+        // 模板数据（定义在init之前）
+        const templates = {
+            'new-store': {
+                title: '【新店开业】欢迎到店，开业大礼等您来',
+                content: '🎉 好消息！本店新开业啦！\n\n📍 地址：[门店地址]\n⏰ 开业时间：[开业日期]\n🎁 开业福利：\n• 到店即送[礼品]\n• 全场消费满[金额]立减[优惠]\n• 会员首单享[折扣]折\n\n期待您的光临！'
+            },
+            'discount': {
+                title: '【限时折扣】特价促销，限时抢购',
+                content: '🔥 限时折扣活动开始啦！\n\n⏰ 活动时间：[开始时间]至[结束时间]\n💰 特价商品：\n• [商品1] 原价[原价] 特价[特价]\n• [商品2] 原价[原价] 特价[特价]\n• [商品3] 原价[原价] 特价[特价]\n\n数量有限，先到先得！'
+            },
+            'package': {
+                title: '【套餐优惠】组合推荐，超值划算',
+                content: '✨ 超值套餐推荐！\n\n📦 套餐名称：[套餐名称]\n💎 套餐内容：\n• [内容1]\n• [内容2]\n• [内容3]\n💰 套餐价格：[价格]\n⏰ 有效期：[有效期]\n\n比单点更划算，快来体验吧！'
+            },
+            'notice': {
+                title: '【活动通知】重要通知，敬请关注',
+                content: '📢 重要通知\n\n尊敬的顾客：\n\n[事由说明]\n\n⏰ 生效时间：[生效时间]\n📍 涉及范围：[涉及范围]\n📞 联系方式：[联系方式]\n\n感谢您的理解与配合！'
+            },
+            'service': {
+                title: '【上门服务】预约下单，方便快捷',
+                content: '🏠 上门服务预约开启！\n\n📋 服务项目：[服务项目]\n💰 服务价格：[价格]起\n⏰ 服务时间：[服务时间]\n📍 服务范围：[服务范围]\n\n专业团队，品质保证！\n\n📞 预约电话：[电话]\n💬 在线咨询：点击咨询'
+            },
+            'group-buy': {
+                title: '【拼团集赞】邀请好友，一起省钱',
+                content: '🎊 拼团集赞活动来啦！\n\n🎯 活动规则：\n• 邀请[邀请人数]位好友助力\n• 或组团[组团人数]人购买\n\n🎁 活动奖励：\n• [奖励1]\n• [奖励2]\n• [奖励3]\n\n⏰ 活动时间：[开始时间]至[结束时间]\n\n快来邀请好友参与吧！'
+            },
+            'festival': {
+                title: '【节日特惠】[节日]特惠，限时抢购',
+                content: '🎉 [节日]特惠活动！\n\n⏰ 活动时间：[开始时间]至[结束时间]\n🎁 节日福利：\n• [福利1]\n• [福利2]\n• [福利3]\n\n💰 特惠商品：\n• [商品1] 特价[价格1]\n• [商品2] 特价[价格2]\n\n[节日]快乐，优惠享不停！'
+            },
+            'member': {
+                title: '【会员专享】尊贵会员，专属福利',
+                content: '👑 会员专享福利！\n\n🎁 会员特权：\n• 全场商品[折扣]折\n• 积分[倍数]倍\n• 生日礼券[礼券]\n• 专属客服服务\n\n💰 会员价格：\n• [商品1] 会员价[会员价1]\n• [商品2] 会员价[会员价2]\n\n成为会员，享受更多优惠！'
+            },
+            'clearance': {
+                title: '【尾货清仓】清仓大甩卖，一件不留',
+                content: '🔥 尾货清仓大甩卖！\n\n⏰ 清仓时间：[开始时间]至[结束时间]\n💰 清仓商品：\n• [商品1] 清仓价[价格1]\n• [商品2] 清仓价[价格2]\n• [商品3] 清仓价[价格3]\n\n⚠️ 数量有限，售完即止！\n\n亏本甩卖，手慢无！'
+            },
+            'custom': {
+                title: '',
+                content: ''
+            },
+            'new-product': {
+                title: '【新品上市】全新产品，震撼来袭',
+                content: '🌟 新品上市啦！\n\n✨ 产品名称：[产品名称]\n💎 产品特点：\n• [特点1]\n• [特点2]\n• [特点3]\n\n💰 上市价格：[价格]\n🎁 首发福利：\n• 前[数量]名购买享[折扣]折\n• 赠送[赠品]\n\n⏰ 上市时间：[上市时间]\n\n全新体验，不容错过！'
+            },
+            'register-gift': {
+                title: '【注册有礼】新用户专享福利',
+                content: '🎁 注册即送好礼！\n\n✨ 新用户福利：\n• 注册即送[礼品/优惠券]\n• 首单立减[金额]\n• 新人专享[折扣]折\n\n📱 注册方式：\n1. 扫码关注/下载APP\n2. 填写手机号注册\n3. 领取新人礼包\n\n⏰ 活动时间：[开始时间]至[结束时间]\n\n快来注册领取吧！'
+            },
+            'share-reward': {
+                title: '【转发有奖】分享好友，赢取好礼',
+                content: '🎊 转发有奖活动！\n\n🎯 参与方式：\n• 转发本活动到朋友圈/群聊\n• 邀请好友关注/注册\n• 集满[数量]个赞\n\n🎁 奖励设置：\n• 转发即送[小礼品]\n• 邀请[人数]人得[奖品1]\n• 邀请[人数]人得[奖品2]\n\n⏰ 活动时间：[开始时间]至[结束时间]\n\n分享越多，奖励越多！'
+            },
+            'recruit-agent': {
+                title: '【招募代理】合作共赢，共创未来',
+                content: '🤝 招募代理商/合伙人！\n\n💼 合作优势：\n• 零门槛加盟\n• 高额佣金分成\n• 专业培训支持\n• 区域保护政策\n\n💰 收益模式：\n• 销售提成[比例]%\n• 团队管理奖金\n• 年度分红奖励\n\n📞 联系方式：[电话/微信]\n📍 公司地址：[地址]\n\n期待与您合作共赢！'
+            },
+            'recruit-worker': {
+                title: '【招工用工】诚聘英才，期待加入',
+                content: '💼 诚聘英才！\n\n🎯 招聘岗位：[岗位名称]\n📋 岗位职责：\n• [职责1]\n• [职责2]\n• [职责3]\n\n✅ 任职要求：\n• [要求1]\n• [要求2]\n• [要求3]\n\n💰 薪资待遇：[薪资范围]\n🎁 员工福利：\n• [福利1]\n• [福利2]\n\n📞 联系电话：[电话]\n📍 工作地址：[地址]\n\n期待您的加入！'
+            },
+            'franchise': {
+                title: '【招商加盟】品牌扩张，诚邀加盟',
+                content: '🏪 品牌招商加盟！\n\n🌟 品牌优势：\n• 知名品牌，市场认可\n• 成熟运营模式\n• 全程开店指导\n• 供应链支持\n\n💰 加盟政策：\n• 加盟费：[金额]\n• 保证金：[金额]\n• 管理费：[金额/比例]\n\n📋 加盟条件：\n• [条件1]\n• [条件2]\n• [条件3]\n\n📞 加盟热线：[电话]\n📍 总部地址：[地址]\n\n携手共创辉煌！'
+            }
+        };
+
+        // 初始化
+        function init() {
+            if (!checkLoginStatus()) return;
+            
+            // 初始化字数统计
+            updateTitleCount();
+            updateContentCount();
+            updateChannelTitleCount();
+            updateChannelContentCount();
+            
+            // 表单提交事件
+            document.getElementById('post-form').addEventListener('submit', handleSubmit);
+            
+            // 模板卡片点击事件
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.template-card').forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                    selectedTemplate = card.dataset.template;
+                    
+                    // 填充模板内容
+                    if (templates[selectedTemplate]) {
+                        document.getElementById('post-title').value = templates[selectedTemplate].title;
+                        document.getElementById('post-content').value = templates[selectedTemplate].content;
+                        updateTitleCount();
+                        updateContentCount();
+                    }
+                });
+            });
+            
+            // 定时发布切换
+            document.querySelector('input[name="schedule-publish"]').addEventListener('change', (e) => {
+                document.getElementById('schedule-time-container').classList.toggle('hidden', !e.target.checked);
+            });
+            
+            // 初始化渠道选择卡片样式
+            document.querySelectorAll('.channel-select-card').forEach(card => {
+                const checkbox = card.querySelector('.channel-select-checkbox');
+                if (checkbox) {
+                    updateChannelCardStyle(card, checkbox.checked);
+                }
+            });
+        }
+        
+        // 更新标题字数统计
+        function updateTitleCount() {
+            const titleInput = document.getElementById('post-title');
+            const countSpan = document.getElementById('title-count');
+            if (titleInput && countSpan) {
+                const count = titleInput.value.length;
+                countSpan.textContent = count + '/100';
+                if (count > 90) {
+                    countSpan.classList.add('text-red-500');
+                    countSpan.classList.remove('text-gray-400');
+                } else {
+                    countSpan.classList.remove('text-red-500');
+                    countSpan.classList.add('text-gray-400');
+                }
+            }
+        }
+        
+        // 更新详情内容字数统计
+        function updateContentCount() {
+            const contentInput = document.getElementById('post-content');
+            const countSpan = document.getElementById('content-count');
+            if (contentInput && countSpan) {
+                const count = contentInput.value.length;
+                countSpan.textContent = count + '/2000';
+                if (count > 1800) {
+                    countSpan.classList.add('text-red-500');
+                    countSpan.classList.remove('text-gray-400');
+                } else {
+                    countSpan.classList.remove('text-red-500');
+                    countSpan.classList.add('text-gray-400');
+                }
+            }
+        }
+        
+        // 更新渠道标题字数统计
+        function updateChannelTitleCount() {
+            const titleInput = document.getElementById('current-channel-title');
+            const countSpan = document.getElementById('channel-title-count');
+            if (titleInput && countSpan) {
+                const count = titleInput.value.length;
+                countSpan.textContent = count + '/100';
+                if (count > 90) {
+                    countSpan.classList.add('text-red-500');
+                    countSpan.classList.remove('text-gray-400');
+                } else {
+                    countSpan.classList.remove('text-red-500');
+                    countSpan.classList.add('text-gray-400');
+                }
+            }
+        }
+        
+        // 更新渠道内容字数统计
+        function updateChannelContentCount() {
+            const contentInput = document.getElementById('current-channel-content');
+            const countSpan = document.getElementById('channel-content-count');
+            if (contentInput && countSpan) {
+                const count = contentInput.value.length;
+                countSpan.textContent = count + '/2000';
+                if (count > 1800) {
+                    countSpan.classList.add('text-red-500');
+                    countSpan.classList.remove('text-gray-400');
+                } else {
+                    countSpan.classList.remove('text-red-500');
+                    countSpan.classList.add('text-gray-400');
+                }
+            }
+        }
+
+        // AI优化页面 - 原文标题字数统计
+        function updateAIOriTitleCount() {
+            const titleInput = document.getElementById('original-title-display');
+            const countSpan = document.getElementById('ai-original-title-count');
+            if (titleInput && countSpan) {
+                const count = titleInput.value.length;
+                countSpan.textContent = count + '/100';
+                if (count > 90) {
+                    countSpan.classList.add('text-red-500');
+                    countSpan.classList.remove('text-gray-400');
+                } else {
+                    countSpan.classList.remove('text-red-500');
+                    countSpan.classList.add('text-gray-400');
+                }
+            }
+        }
+
+        // AI优化页面 - 原文内容字数统计
+        function updateAIOriContentCount() {
+            const contentInput = document.getElementById('original-content-display');
+            const countSpan = document.getElementById('ai-original-content-count');
+            if (contentInput && countSpan) {
+                const count = contentInput.value.length;
+                countSpan.textContent = count + '/2000';
+                if (count > 1800) {
+                    countSpan.classList.add('text-red-500');
+                    countSpan.classList.remove('text-gray-400');
+                } else {
+                    countSpan.classList.remove('text-red-500');
+                    countSpan.classList.add('text-gray-400');
+                }
+            }
+        }
+
+        // AI优化页面 - 优化后标题字数统计
+        function updateAIOptTitleCount() {
+            const titleInput = document.getElementById('optimized-title-display');
+            const countSpan = document.getElementById('ai-optimized-title-count');
+            if (titleInput && countSpan) {
+                const count = titleInput.value.length;
+                countSpan.textContent = count + '/100';
+                if (count > 90) {
+                    countSpan.classList.add('text-red-500');
+                    countSpan.classList.remove('text-gray-400');
+                } else {
+                    countSpan.classList.remove('text-red-500');
+                    countSpan.classList.add('text-gray-400');
+                }
+            }
+        }
+
+        // AI优化页面 - 优化后内容字数统计
+        function updateAIOptContentCount() {
+            const contentInput = document.getElementById('optimized-content-display');
+            const countSpan = document.getElementById('ai-optimized-content-count');
+            if (contentInput && countSpan) {
+                const count = contentInput.value.length;
+                countSpan.textContent = count + '/2000';
+                if (count > 1800) {
+                    countSpan.classList.add('text-red-500');
+                    countSpan.classList.remove('text-gray-400');
+                } else {
+                    countSpan.classList.remove('text-red-500');
+                    countSpan.classList.add('text-gray-400');
+                }
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

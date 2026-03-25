@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商圈快讯 - 居民端</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header-with-actions">
+            <h1>商圈快讯</h1>
+            <p>发现周边商家的最新消息和优惠活动</p>
+            <div class="action-buttons">
+                <a href="view-messages.html" class="btn btn-primary">
+                    <i data-lucide="briefcase"></i> 切换到商家端
+                </a>
+            </div>
+        </div>
+
+        <!-- 搜索和筛选 -->
+        <div class="filter-container">
+            <div class="search-box">
+                <i data-lucide="search"></i>
+                <input type="text" id="searchInput" placeholder="搜索商家或消息内容...">
+            </div>
+            
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all">全部</button>
+                <button class="filter-tab" data-filter="promotion">促销活动</button>
+                <button class="filter-tab" data-filter="event">活动通知</button>
+                <button class="filter-tab" data-filter="notice">公告通知</button>
+            </div>
+        </div>
+
+        <!-- 消息列表 -->
+        <div id="messageList" class="message-list">
+            <!-- 消息列表将通过JavaScript动态生成 -->
+            <div id="loadingIndicator" class="loading-indicator">
+                <div class="loading-spinner"></div>
+                <p>正在加载消息...</p>
+            </div>
+        </div>
+
+        <!-- 空状态提示 -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <div style="font-size: 6rem; color: #d1d5db; margin-bottom: 20px;">
+                <i data-lucide="newspaper"></i>
+            </div>
+            <h2>暂无消息</h2>
+            <p>周边商家还没有发布任何消息，稍后再来看看吧！</p>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载消息列表
+            loadMessages();
+
+            // 绑定搜索事件
+            document.getElementById('searchInput').addEventListener('input', function() {
+                filterMessages();
+            });
+
+            // 绑定筛选标签事件
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 更新选中状态
+                    document.querySelectorAll('.filter-tab').forEach(t => {
+                        t.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    // 筛选消息
+                    filterMessages();
+                });
+            });
+
+            // 初始化Lucide图标
+            lucide.createIcons();
+        });
+
+        // 加载消息列表
+        function loadMessages() {
+            const messages = App.messages;
+            const messageList = document.getElementById('messageList');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const emptyState = document.getElementById('emptyState');
+
+            // 隐藏加载提示
+            loadingIndicator.style.display = 'none';
+
+            // 检查是否有消息
+            if (messages.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            // 生成消息列表
+            messages.forEach(message => {
+                const messageCard = createMessageCard(message);
+                messageList.appendChild(messageCard);
+            });
+        }
+
+        // 创建消息卡片
+        function createMessageCard(message) {
+            const messageCard = document.createElement('div');
+            messageCard.className = 'resident-message-card';
+            messageCard.dataset.category = message.category;
+            messageCard.dataset.search = `${message.title} ${message.content} ${message.merchantName}`;
+            
+            messageCard.innerHTML = `
+                <div class="message-card-header">
+                    <div class="merchant-info">
+                        <div class="merchant-avatar">${message.merchantName ? message.merchantName.charAt(0) : '商'}</div>
+                        <div class="merchant-details">
+                            <div class="merchant-name">${escapeHtml(message.merchantName)}</div>
+                            <div class="message-date">${App.formatDate(message.publishDate)}</div>
+                        </div>
+                    </div>
+                    <div class="message-category-tag">${getCategoryLabel(message.category)}</div>
+                </div>
+                
+                <div class="message-card-content">
+                    <h3 class="message-title">${escapeHtml(message.title)}</h3>
+                    <p class="message-text">${escapeHtml(message.content)}</p>
+                    ${message.imageUrl ? `<img src="${message.imageUrl}" class="message-image" alt="消息图片">` : ''}
+                </div>
+                
+                <div class="message-card-actions">
+                    <button class="action-btn like-btn" data-message-id="${message.id}">
+                        <i data-lucide="thumbs-up"></i>
+                        <span class="action-count">${message.likes}</span>
+                    </button>
+                    <button class="action-btn comment-btn" data-message-id="${message.id}">
+                        <i data-lucide="message-circle"></i>
+                        <span class="action-count">${message.comments.length}</span>
+                    </button>
+                    <button class="action-btn share-btn" data-message-id="${message.id}">
+                        <i data-lucide="share-2"></i>
+                        <span class="action-count">${message.shares}</span>
+                    </button>
+                </div>
+                
+                <!-- 评论输入框 -->
+                <div class="comment-input-section" data-message-id="${message.id}" style="display: none;">
+                    <input type="text" class="comment-input" placeholder="写下您的评论...">
+                    <button class="btn btn-small btn-primary send-comment-btn">发送</button>
+                </div>
+            `;
+
+            // 添加点赞按钮事件
+            const likeBtn = messageCard.querySelector('.like-btn');
+            likeBtn.addEventListener('click', function() {
+                handleLike(message.id);
+            });
+
+            // 添加评论按钮事件
+            const commentBtn = messageCard.querySelector('.comment-btn');
+            commentBtn.addEventListener('click', function() {
+                toggleCommentInput(message.id);
+            });
+
+            // 添加分享按钮事件
+            const shareBtn = messageCard.querySelector('.share-btn');
+            shareBtn.addEventListener('click', function() {
+                handleShare(message.id);
+            });
+
+            // 添加发送评论按钮事件
+            const sendCommentBtn = messageCard.querySelector('.send-comment-btn');
+            sendCommentBtn.addEventListener('click', function() {
+                const commentInput = messageCard.querySelector('.comment-input');
+                handleSendComment(message.id, commentInput.value);
+                commentInput.value = '';
+            });
+
+            // 自动增加浏览量
+            App.updateMessageStats(message.id, 'view');
+
+            return messageCard;
+        }
+
+        // 处理点赞
+        function handleLike(messageId) {
+            // 更新数据
+            App.updateMessageStats(messageId, 'like');
+            
+            // 更新UI
+            const likeBtn = document.querySelector(`.like-btn[data-message-id="${messageId}"]`);
+            const countSpan = likeBtn.querySelector('.action-count');
+            countSpan.textContent = parseInt(countSpan.textContent) + 1;
+            
+            // 添加点赞动画
+            likeBtn.classList.add('liked');
+            setTimeout(() => {
+                likeBtn.classList.remove('liked');
+            }, 300);
+        }
+
+        // 切换评论输入框
+        function toggleCommentInput(messageId) {
+            const commentInputSection = document.querySelector(`.comment-input-section[data-message-id="${messageId}"]`);
+            const commentBtn = document.querySelector(`.comment-btn[data-message-id="${messageId}"]`);
+            
+            if (commentInputSection.style.display === 'none' || commentInputSection.style.display === '') {
+                commentInputSection.style.display = 'flex';
+                commentBtn.classList.add('active');
+            } else {
+                commentInputSection.style.display = 'none';
+                commentBtn.classList.remove('active');
+            }
+        }
+
+        // 处理发送评论
+        function handleSendComment(messageId, content) {
+            if (!content.trim()) return;
+
+            // 构建评论对象
+            const comment = {
+                userName: '居民' + Math.floor(Math.random() * 1000),
+                content: content
+            };
+
+            // 保存评论
+            App.addComment(messageId, comment);
+
+            // 更新UI
+            const commentBtn = document.querySelector(`.comment-btn[data-message-id="${messageId}"]`);
+            const countSpan = commentBtn.querySelector('.action-count');
+            countSpan.textContent = parseInt(countSpan.textContent) + 1;
+
+            // 隐藏评论输入框
+            const commentInputSection = document.querySelector(`.comment-input-section[data-message-id="${messageId}"]`);
+            commentInputSection.style.display = 'none';
+            commentBtn.classList.remove('active');
+
+            alert('评论成功！');
+        }
+
+        // 处理分享
+        function handleShare(messageId) {
+            // 更新数据
+            App.updateMessageStats(messageId, 'share');
+            
+            // 更新UI
+            const shareBtn = document.querySelector(`.share-btn[data-message-id="${messageId}"]`);
+            const countSpan = shareBtn.querySelector('.action-count');
+            countSpan.textContent = parseInt(countSpan.textContent) + 1;
+            
+            // 添加分享动画
+            shareBtn.classList.add('shared');
+            setTimeout(() => {
+                shareBtn.classList.remove('shared');
+            }, 300);
+
+            alert('分享成功！');
+        }
+
+        // 筛选消息
+        function filterMessages() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const activeFilter = document.querySelector('.filter-tab.active').dataset.filter;
+            const messageCards = document.querySelectorAll('.resident-message-card');
+            const emptyState = document.getElementById('emptyState');
+            let hasVisibleMessages = false;
+
+            messageCards.forEach(card => {
+                const category = card.dataset.category;
+                const searchContent = card.dataset.search.toLowerCase();
+                
+                const matchesSearch = searchText === '' || searchContent.includes(searchText);
+                const matchesFilter = activeFilter === 'all' || category === activeFilter;
+                
+                if (matchesSearch && matchesFilter) {
+                    card.style.display = 'block';
+                    hasVisibleMessages = true;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            emptyState.style.display = hasVisibleMessages ? 'none' : 'block';
+        }
+
+        // 获取分类标签
+        function getCategoryLabel(category) {
+            const labels = {
+                promotion: '促销活动',
+                event: '活动通知',
+                notice: '公告通知',
+                other: '其他类型'
+            };
+            return labels[category] || '其他类型';
+        }
+
+        // HTML转义函数
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发布消息 - 商圈快讯</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>发布消息</h1>
+        
+        <!-- 步骤指示器 -->
+        <div class="step-indicator">
+            <div class="step-item active">
+                <div class="step-number">1</div>
+                <div class="step-text">选择模板</div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">2</div>
+                <div class="step-text">编辑内容</div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">3</div>
+                <div class="step-text">发布设置</div>
+            </div>
+        </div>
+        
+        <!-- 发布容器 -->
+        <div class="form-container">
+            <!-- 步骤1：选择模板 -->
+            <div id="step1" class="step-content active">
+                <h2>选择营销模板</h2>
+                <p>选择适合的模板快速创建营销消息</p>
+                
+                <div class="template-list">
+                    <div class="template-card" data-template="promotion">
+                        <div class="template-type">促销活动</div>
+                        <div class="template-title">限时折扣</div>
+                        <div class="template-description">适合发布限时折扣、优惠券等促销信息</div>
+                    </div>
+                    
+                    <div class="template-card" data-template="event">
+                        <div class="template-type">活动通知</div>
+                        <div class="template-title">新品上市</div>
+                        <div class="template-description">适合发布新品上市、开业庆典等活动信息</div>
+                    </div>
+                    
+                    <div class="template-card" data-template="notice">
+                        <div class="template-type">公告通知</div>
+                        <div class="template-title">重要公告</div>
+                        <div class="template-description">适合发布营业时间调整、闭店通知等重要信息</div>
+                    </div>
+                    
+                    <div class="template-card" data-template="other">
+                        <div class="template-type">其他类型</div>
+                        <div class="template-title">自定义模板</div>
+                        <div class="template-description">自由创建您需要的任何类型消息</div>
+                    </div>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="button" id="nextToStep2" class="btn btn-primary" disabled>
+                        下一步 <i data-lucide="arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 步骤2：编辑内容 -->
+            <div id="step2" class="step-content" style="display: none;">
+                <h2>编辑消息内容</h2>
+                <p>填写您的消息内容</p>
+                
+                <form id="messageForm">
+                    <div class="form-group">
+                        <label for="title">消息标题</label>
+                        <input type="text" id="title" name="title" required placeholder="请输入消息标题">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="content">消息内容</label>
+                        <textarea id="content" name="content" required placeholder="请输入消息内容"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="imageUrl">图片URL（可选）</label>
+                        <input type="text" id="imageUrl" name="imageUrl" placeholder="输入图片URL或点击上传">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="linkUrl">跳转链接（可选）</label>
+                        <input type="text" id="linkUrl" name="linkUrl" placeholder="输入跳转链接">
+                    </div>
+                </form>
+                
+                <div class="btn-group">
+                    <button type="button" id="backToStep1" class="btn btn-secondary">
+                        <i data-lucide="arrow-left"></i> 上一步
+                    </button>
+                    <button type="button" id="nextToStep3" class="btn btn-primary">
+                        下一步 <i data-lucide="arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 步骤3：发布设置 -->
+            <div id="step3" class="step-content" style="display: none;">
+                <h2>发布设置</h2>
+                <p>设置消息的发布信息</p>
+                
+                <div class="form-group">
+                    <label for="publishDate">发布时间</label>
+                    <input type="datetime-local" id="publishDate" name="publishDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="expireDate">过期时间</label>
+                    <input type="datetime-local" id="expireDate" name="expireDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="targetAudience">目标受众</label>
+                    <select id="targetAudience" name="targetAudience" required>
+                        <option value="all">所有居民</option>
+                        <option value="nearby">周边1公里</option>
+                        <option value="interest">感兴趣用户</option>
+                        <option value="regular">常来用户</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notification">是否发送通知</label>
+                    <div style="display: flex; gap: 20px;">
+                        <label><input type="radio" name="notification" value="yes" checked> 是</label>
+                        <label><input type="radio" name="notification" value="no"> 否</label>
+                    </div>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="button" id="backToStep2" class="btn btn-secondary">
+                        <i data-lucide="arrow-left"></i> 上一步
+                    </button>
+                    <button type="button" id="publishMessage" class="btn btn-primary">
+                        发布消息 <i data-lucide="send"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 发布成功 -->
+            <div id="publishSuccess" class="step-content" style="display: none; text-align: center;">
+                <div style="font-size: 6rem; color: #10b981; margin-bottom: 20px;">
+                    <i data-lucide="check-circle"></i>
+                </div>
+                <h2>发布成功！</h2>
+                <p>您的消息已成功发布到商圈快讯平台</p>
+                
+                <div class="btn-group">
+                    <a href="view-messages.html" class="btn btn-primary">
+                        查看消息 <i data-lucide="message-square"></i>
+                    </a>
+                    <a href="statistics.html" class="btn btn-secondary">
+                        查看统计 <i data-lucide="bar-chart-3"></i>
+                    </a>
+                    <a href="resident-view.html" class="btn btn-success">
+                        切换到居民端 <i data-lucide="users"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        // 初始化变量
+        let currentStep = 1;
+        let selectedTemplate = null;
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查用户是否登录
+            if (!App.isLoggedIn()) {
+                alert('请先登录！');
+                window.location.href = 'register.html';
+                return;
+            }
+            
+            // 设置默认日期
+            const now = new Date();
+            const publishDate = document.getElementById('publishDate');
+            const expireDate = document.getElementById('expireDate');
+            
+            publishDate.value = now.toISOString().slice(0, 16);
+            
+            const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+            expireDate.value = tomorrow.toISOString().slice(0, 16);
+            
+            // 模板选择事件
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    // 移除所有选中状态
+                    document.querySelectorAll('.template-card').forEach(c => {
+                        c.classList.remove('selected');
+                    });
+                    
+                    // 添加当前选中状态
+                    this.classList.add('selected');
+                    selectedTemplate = this.dataset.template;
+                    
+                    // 启用下一步按钮
+                    document.getElementById('nextToStep2').disabled = false;
+                });
+            });
+            
+            // 步骤导航事件
+            document.getElementById('nextToStep2').addEventListener('click', function() {
+                goToStep(2);
+            });
+            
+            document.getElementById('backToStep1').addEventListener('click', function() {
+                goToStep(1);
+            });
+            
+            document.getElementById('nextToStep3').addEventListener('click', function() {
+                goToStep(3);
+            });
+            
+            document.getElementById('backToStep2').addEventListener('click', function() {
+                goToStep(2);
+            });
+            
+            // 发布消息事件
+            document.getElementById('publishMessage').addEventListener('click', function() {
+                publishMessage();
+            });
+            
+            // 初始化Lucide图标
+            lucide.createIcons();
+        });
+        
+        // 步骤导航函数
+        function goToStep(step) {
+            currentStep = step;
+            
+            // 更新步骤指示器
+            document.querySelectorAll('.step-item').forEach((item, index) => {
+                if (index + 1 <= step) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+            
+            // 显示当前步骤内容
+            document.querySelectorAll('.step-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            document.getElementById('step' + step).style.display = 'block';
+        }
+        
+        // 发布消息函数
+        function publishMessage() {
+            const formData = new FormData(document.getElementById('messageForm'));
+            const publishDate = document.getElementById('publishDate').value;
+            const expireDate = document.getElementById('expireDate').value;
+            const targetAudience = document.getElementById('targetAudience').value;
+            const notification = document.querySelector('input[name="notification"]:checked').value;
+            
+            // 构建消息对象
+            const message = {
+                title: formData.get('title'),
+                content: formData.get('content'),
+                imageUrl: formData.get('imageUrl') || '',
+                linkUrl: formData.get('linkUrl') || '',
+                templateType: selectedTemplate,
+                merchantId: App.user.id,
+                merchantName: App.user.businessName,
+                publishDate: new Date(publishDate).toISOString(),
+                expireDate: new Date(expireDate).toISOString(),
+                targetAudience: targetAudience,
+                notification: notification === 'yes',
+                category: selectedTemplate
+            };
+            
+            // 保存消息
+            App.saveMessage(message);
+            
+            // 显示发布成功页面
+            document.querySelectorAll('.step-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            document.getElementById('publishSuccess').style.display = 'block';
+            
+            // 重新初始化Lucide图标
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

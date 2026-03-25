@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>查看消息 - 商圈快讯</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header-with-actions">
+            <h1>我的消息</h1>
+            <div class="action-buttons">
+                <a href="post-message.html" class="btn btn-primary">
+                    <i data-lucide="plus"></i> 发布新消息
+                </a>
+                <a href="statistics.html" class="btn btn-secondary">
+                    <i data-lucide="bar-chart-3"></i> 查看统计
+                </a>
+            </div>
+        </div>
+
+        <div class="message-list-container">
+            <!-- 消息列表将通过JavaScript动态生成 -->
+            <div id="messageList" class="message-list">
+                <!-- 加载提示 -->
+                <div id="loadingIndicator" class="loading-indicator">
+                    <div class="loading-spinner"></div>
+                    <p>正在加载消息...</p>
+                </div>
+            </div>
+
+            <!-- 空状态提示 -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div style="font-size: 6rem; color: #d1d5db; margin-bottom: 20px;">
+                    <i data-lucide="inbox"></i>
+                </div>
+                <h2>暂无消息</h2>
+                <p>您还没有发布任何消息，点击下方按钮发布第一条消息吧！</p>
+                <a href="post-message.html" class="btn btn-primary">
+                    <i data-lucide="plus"></i> 发布新消息
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查用户是否登录
+            if (!App.isLoggedIn()) {
+                alert('请先登录！');
+                window.location.href = 'register.html';
+                return;
+            }
+
+            // 加载消息列表
+            loadMessages();
+
+            // 初始化Lucide图标
+            lucide.createIcons();
+        });
+
+        // 加载消息列表
+        function loadMessages() {
+            const messages = App.getUserMessages();
+            const messageList = document.getElementById('messageList');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const emptyState = document.getElementById('emptyState');
+
+            // 隐藏加载提示
+            loadingIndicator.style.display = 'none';
+
+            // 检查是否有消息
+            if (messages.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            // 生成消息列表
+            messages.forEach(message => {
+                const messageItem = createMessageItem(message);
+                messageList.appendChild(messageItem);
+            });
+        }
+
+        // 创建消息列表项
+        function createMessageItem(message) {
+            const messageItem = document.createElement('div');
+            messageItem.className = 'message-item';
+            messageItem.innerHTML = `
+                <div class="message-header">
+                    <div class="message-title">${escapeHtml(message.title)}</div>
+                    <div class="message-meta">
+                        <span class="message-date">${App.formatDate(message.publishDate)}</span>
+                        <span class="message-category">${getCategoryLabel(message.category)}</span>
+                    </div>
+                </div>
+                
+                <div class="message-content">
+                    <p>${escapeHtml(message.content.substring(0, 100))}${message.content.length > 100 ? '...' : ''}</p>
+                    ${message.imageUrl ? `<img src="${message.imageUrl}" class="message-image" alt="消息图片">` : ''}
+                </div>
+                
+                <div class="message-stats">
+                    <div class="stat-item">
+                        <i data-lucide="eye"></i>
+                        <span>${message.views}</span>
+                    </div>
+                    <div class="stat-item">
+                        <i data-lucide="thumbs-up"></i>
+                        <span>${message.likes}</span>
+                    </div>
+                    <div class="stat-item">
+                        <i data-lucide="message-circle"></i>
+                        <span>${message.comments.length}</span>
+                    </div>
+                    <div class="stat-item">
+                        <i data-lucide="share-2"></i>
+                        <span>${message.shares}</span>
+                    </div>
+                </div>
+                
+                <div class="message-actions">
+                    <button class="btn btn-small btn-primary view-comments-btn" data-message-id="${message.id}">
+                        <i data-lucide="message-circle"></i> 查看评论
+                    </button>
+                    <button class="btn btn-small btn-secondary">
+                        <i data-lucide="edit-2"></i> 编辑
+                    </button>
+                    <button class="btn btn-small btn-danger">
+                        <i data-lucide="trash-2"></i> 删除
+                    </button>
+                </div>
+                
+                <!-- 评论列表 -->
+                <div class="comments-section" data-message-id="${message.id}" style="display: none;">
+                    <h3>用户评论</h3>
+                    ${message.comments.length === 0 ? '<p class="no-comments">暂无评论</p>' : ''}
+                    <div class="comments-list">
+                        ${message.comments.map(comment => `
+                            <div class="comment-item">
+                                <div class="comment-avatar">${comment.userName ? escapeHtml(comment.userName.charAt(0)) : 'U'}</div>
+                                <div class="comment-content">
+                                    <div class="comment-header">
+                                        <span class="comment-user">${comment.userName ? escapeHtml(comment.userName) : '匿名用户'}</span>
+                                        <span class="comment-time">${App.formatDate(comment.createTime)}</span>
+                                    </div>
+                                    <div class="comment-text">${escapeHtml(comment.content)}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            // 添加查看评论按钮事件
+            const viewCommentsBtn = messageItem.querySelector('.view-comments-btn');
+            viewCommentsBtn.addEventListener('click', function() {
+                toggleComments(message.id);
+            });
+
+            return messageItem;
+        }
+
+        // 切换评论显示
+        function toggleComments(messageId) {
+            const commentsSection = document.querySelector(`.comments-section[data-message-id="${messageId}"]`);
+            const viewCommentsBtn = document.querySelector(`.view-comments-btn[data-message-id="${messageId}"]`);
+            const icon = viewCommentsBtn.querySelector('i');
+
+            if (commentsSection.style.display === 'none' || commentsSection.style.display === '') {
+                commentsSection.style.display = 'block';
+                viewCommentsBtn.innerHTML = `<i data-lucide="message-circle"></i> 收起评论`;
+                lucide.createIcons(); // 重新初始化图标
+            } else {
+                commentsSection.style.display = 'none';
+                viewCommentsBtn.innerHTML = `<i data-lucide="message-circle"></i> 查看评论`;
+                lucide.createIcons(); // 重新初始化图标
+            }
+        }
+
+        // 获取分类标签
+        function getCategoryLabel(category) {
+            const labels = {
+                promotion: '促销活动',
+                event: '活动通知',
+                notice: '公告通知',
+                other: '其他类型'
+            };
+            return labels[category] || '其他类型';
+        }
+
+        // HTML转义函数
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

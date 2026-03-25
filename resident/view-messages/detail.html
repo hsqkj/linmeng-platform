@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活动详情 - 邻盟营销助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.544.0/dist/umd/lucide.min.js"></script>
+    <style>
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+        .tag-orange { background-color: #fff7ed; color: #ea580c; }
+        .tag-blue { background-color: #eff6ff; color: #2563eb; }
+        .tag-green { background-color: #f0fdf4; color: #16a34a; }
+        .tag-purple { background-color: #faf5ff; color: #9333ea; }
+        .tag-red { background-color: #fef2f2; color: #dc2626; }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1f2937;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.show {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white sticky top-0 z-50 shadow-sm">
+            <div class="px-4 py-3 flex items-center justify-between">
+                <button onclick="window.history.back()" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <i data-lucide="arrow-left" class="h-6 w-6 text-gray-600"></i>
+                </button>
+                <h1 class="text-lg font-bold text-gray-900">活动详情</h1>
+                <div class="flex items-center space-x-2">
+                    <button onclick="toggleCollection()" class="p-2 hover:bg-gray-100 rounded-lg">
+                        <i data-lucide="heart" class="h-6 w-6 text-gray-600" id="collect-icon"></i>
+                    </button>
+                    <button onclick="shareActivity()" class="p-2 hover:bg-gray-100 rounded-lg">
+                        <i data-lucide="share-2" class="h-6 w-6 text-gray-600"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="activity-detail" class="p-4 pb-24">
+        </div>
+        
+        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
+            <div class="flex space-x-3 max-w-4xl mx-auto">
+                <button onclick="showConsultModal()" class="flex-1 px-4 py-3 bg-orange-100 text-orange-700 rounded-lg font-medium hover:bg-orange-200 transition-colors">
+                    <i data-lucide="message-circle" class="h-5 w-5 inline mr-2"></i>
+                    咨询商家
+                </button>
+                <button onclick="showOrderModal()" class="flex-1 px-4 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors">
+                    <i data-lucide="shopping-bag" class="h-5 w-5 inline mr-2"></i>
+                    立即下单
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+    
+    <div id="consult-modal" class="modal">
+        <div class="bg-white rounded-xl p-6 mx-4 max-w-sm w-full">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">咨询商家</h3>
+                <button onclick="hideConsultModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <i data-lucide="x" class="h-5 w-5 text-gray-600"></i>
+                </button>
+            </div>
+            <div class="mb-4">
+                <div class="flex items-center mb-3">
+                    <img id="consult-merchant-avatar" src="" alt="" class="w-10 h-10 rounded-full mr-3">
+                    <div>
+                        <p id="consult-merchant-name" class="font-medium text-gray-900"></p>
+                        <p class="text-sm text-gray-500">商家将在24小时内回复</p>
+                    </div>
+                </div>
+                <textarea id="consult-content" rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="请输入您想咨询的问题..."></textarea>
+            </div>
+            <button onclick="submitConsult()" class="w-full px-4 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700">
+                发送咨询
+            </button>
+        </div>
+    </div>
+    
+    <div id="order-modal" class="modal">
+        <div class="bg-white rounded-xl p-6 mx-4 max-w-sm w-full">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">立即下单</h3>
+                <button onclick="hideOrderModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <i data-lucide="x" class="h-5 w-5 text-gray-600"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">联系人</label>
+                    <input type="text" id="order-contact" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="请输入联系人姓名">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">联系电话</label>
+                    <input type="tel" id="order-phone" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="请输入联系电话">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">下单内容</label>
+                    <textarea id="order-content" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="请输入您要购买的商品或服务..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">数量</label>
+                    <input type="number" id="order-quantity" value="1" min="1" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                </div>
+            </div>
+            <button onclick="submitOrder()" class="w-full mt-4 px-4 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700">
+                提交订单
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        lucide.createIcons();
+        
+        let activity = null;
+        let isCollected = false;
+        
+        function init() {
+            const activityData = localStorage.getItem('currentActivity');
+            if (!activityData) {
+                showToast('活动信息不存在');
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            activity = JSON.parse(activityData);
+            loadActivityDetail();
+            loadCollections();
+            increaseViews();
+        }
+        
+        function loadActivityDetail() {
+            const detailContainer = document.getElementById('activity-detail');
+            
+            const tagsHtml = activity.tags.map(tag => {
+                const tagClass = getTagClass(tag);
+                return `<span class="tag ${tagClass}">${tag}</span>`;
+            }).join('');
+            
+            detailContainer.innerHTML = `
+                <img src="${activity.coverImage}" alt="${activity.title}" class="w-full h-64 object-cover rounded-xl mb-4">
+                
+                <div class="flex items-center mb-4">
+                    <img src="${activity.merchantAvatar}" alt="${activity.merchantName}" class="w-12 h-12 rounded-full mr-3">
+                    <div class="flex-1">
+                        <p class="font-bold text-gray-900">${activity.merchantName}</p>
+                        <p class="text-sm text-gray-500">${activity.industry} · ${activity.distance}</p>
+                    </div>
+                    <button onclick="showMerchantDetail()" class="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium">
+                        查看商家
+                    </button>
+                </div>
+                
+                <h1 class="text-2xl font-bold text-gray-900 mb-3">${activity.title}</h1>
+                
+                <div class="mb-4">
+                    ${tagsHtml}
+                </div>
+                
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <div class="flex items-center text-sm text-gray-600 mb-2">
+                        <i data-lucide="calendar" class="h-4 w-4 mr-2"></i>
+                        <span>活动时间：${activity.startTime} 至 ${activity.endTime}</span>
+                    </div>
+                    <div class="flex items-center text-sm text-gray-600">
+                        <i data-lucide="map-pin" class="h-4 w-4 mr-2"></i>
+                        <span>活动地点：${activity.merchantName}</span>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h2 class="text-lg font-bold text-gray-900 mb-3">活动详情</h2>
+                    <div class="text-gray-700 whitespace-pre-line leading-relaxed">${activity.content}</div>
+                </div>
+                
+                <div class="flex items-center justify-between text-sm text-gray-500 mb-6">
+                    <div class="flex items-center space-x-4">
+                        <span><i data-lucide="eye" class="h-4 w-4 inline mr-1"></i>${activity.views}</span>
+                        <span><i data-lucide="heart" class="h-4 w-4 inline mr-1"></i>${activity.likes}</span>
+                        <span><i data-lucide="message-circle" class="h-4 w-4 inline mr-1"></i>${activity.comments}</span>
+                        <span><i data-lucide="share-2" class="h-4 w-4 inline mr-1"></i>${activity.shares}</span>
+                    </div>
+                    <span>发布于 ${activity.startTime}</span>
+                </div>
+                
+                <div class="border-t border-gray-200 pt-6">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4">用户评论 (${activity.comments})</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <img src="https://via.placeholder.com/40" alt="" class="w-10 h-10 rounded-full mr-3">
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between mb-1">
+                                    <p class="font-medium text-gray-900 text-sm">张三</p>
+                                    <span class="text-xs text-gray-500">2小时前</span>
+                                </div>
+                                <p class="text-sm text-gray-700">活动很给力，已经下单了！</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <img src="https://via.placeholder.com/40" alt="" class="w-10 h-10 rounded-full mr-3">
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between mb-1">
+                                    <p class="font-medium text-gray-900 text-sm">李四</p>
+                                    <span class="text-xs text-gray-500">5小时前</span>
+                                </div>
+                                <p class="text-sm text-gray-700">优惠力度很大，推荐大家参加！</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            lucide.createIcons();
+        }
+        
+        function getTagClass(tag) {
+            const tagClasses = {
+                '限时折扣': 'tag-orange',
+                '新店开业': 'tag-blue',
+                '上门服务': 'tag-green',
+                '拼团集赞': 'tag-purple',
+                '会员专享': 'tag-red',
+                '生鲜': 'tag-orange',
+                '美容': 'tag-purple',
+                '家政': 'tag-green',
+                '亲子': 'tag-blue',
+                '零售': 'tag-red',
+                '特价': 'tag-orange',
+                '5折': 'tag-orange',
+                '预约': 'tag-green',
+                '教育': 'tag-blue',
+                '积分兑换': 'tag-red'
+            };
+            return tagClasses[tag] || 'tag-blue';
+        }
+        
+        function loadCollections() {
+            const collections = JSON.parse(localStorage.getItem('collections') || '[]');
+            isCollected = collections.includes(activity.id);
+            updateCollectIcon();
+        }
+        
+        function toggleCollection() {
+            const collections = JSON.parse(localStorage.getItem('collections') || '[]');
+            const index = collections.indexOf(activity.id);
+            
+            if (index > -1) {
+                collections.splice(index, 1);
+                isCollected = false;
+                showToast('已取消收藏');
+            } else {
+                collections.push(activity.id);
+                isCollected = true;
+                showToast('已收藏');
+            }
+            
+            localStorage.setItem('collections', JSON.stringify(collections));
+            updateCollectIcon();
+        }
+        
+        function updateCollectIcon() {
+            const icon = document.getElementById('collect-icon');
+            if (icon) {
+                if (isCollected) {
+                    icon.classList.remove('text-gray-600');
+                    icon.classList.add('text-red-500');
+                } else {
+                    icon.classList.remove('text-red-500');
+                    icon.classList.add('text-gray-600');
+                }
+            }
+        }
+        
+        function shareActivity() {
+            if (navigator.share) {
+                navigator.share({
+                    title: activity.title,
+                    text: activity.content.substring(0, 100),
+                    url: window.location.href
+                }).then(() => {
+                    showToast('分享成功');
+                    activity.shares++;
+                }).catch(() => {
+                    showToast('分享失败');
+                });
+            } else {
+                showToast('分享功能开发中');
+            }
+        }
+        
+        function increaseViews() {
+            activity.views++;
+        }
+        
+        function showConsultModal() {
+            document.getElementById('consult-merchant-avatar').src = activity.merchantAvatar;
+            document.getElementById('consult-merchant-name').textContent = activity.merchantName;
+            document.getElementById('consult-modal').classList.add('show');
+        }
+        
+        function hideConsultModal() {
+            document.getElementById('consult-modal').classList.remove('show');
+            document.getElementById('consult-content').value = '';
+        }
+        
+        function submitConsult() {
+            const content = document.getElementById('consult-content').value.trim();
+            if (!content) {
+                showToast('请输入咨询内容');
+                return;
+            }
+            
+            showToast('咨询已发送，商家将尽快回复');
+            hideConsultModal();
+            activity.comments++;
+        }
+        
+        function showOrderModal() {
+            document.getElementById('order-content').value = activity.title;
+            document.getElementById('order-modal').classList.add('show');
+        }
+        
+        function hideOrderModal() {
+            document.getElementById('order-modal').classList.remove('show');
+            document.getElementById('order-contact').value = '';
+            document.getElementById('order-phone').value = '';
+            document.getElementById('order-content').value = '';
+            document.getElementById('order-quantity').value = '1';
+        }
+        
+        function submitOrder() {
+            const contact = document.getElementById('order-contact').value.trim();
+            const phone = document.getElementById('order-phone').value.trim();
+            const content = document.getElementById('order-content').value.trim();
+            const quantity = document.getElementById('order-quantity').value;
+            
+            if (!contact) {
+                showToast('请输入联系人姓名');
+                return;
+            }
+            
+            if (!phone) {
+                showToast('请输入联系电话');
+                return;
+            }
+            
+            if (!content) {
+                showToast('请输入下单内容');
+                return;
+            }
+            
+            const order = {
+                id: Date.now(),
+                activityId: activity.id,
+                merchantId: activity.merchantId,
+                merchantName: activity.merchantName,
+                contactName: contact,
+                contactPhone: phone,
+                orderContent: content,
+                quantity: parseInt(quantity),
+                status: 0,
+                createTime: new Date().toISOString()
+            };
+            
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            orders.unshift(order);
+            localStorage.setItem('orders', JSON.stringify(orders));
+            
+            showToast('订单提交成功，商家将尽快联系您');
+            hideOrderModal();
+            activity.orders++;
+        }
+        
+        function showMerchantDetail() {
+            showToast('商家详情页面开发中');
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

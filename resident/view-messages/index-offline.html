@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>邻盟营销助手 - 用户端</title>
+    <link rel="stylesheet" href="../../css/output.css">
+    <style>
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+        .tag-orange { background-color: #fff7ed; color: #ea580c; }
+        .tag-blue { background-color: #eff6ff; color: #2563eb; }
+        .tag-green { background-color: #f0fdf4; color: #16a34a; }
+        .tag-purple { background-color: #faf5ff; color: #9333ea; }
+        .tag-red { background-color: #fef2f2; color: #dc2626; }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1f2937;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .filter-btn {
+            transition: all 0.2s;
+        }
+        .filter-btn.active {
+            background-color: #f97316;
+            color: white;
+        }
+        .activity-card {
+            transition: all 0.2s;
+        }
+        .activity-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* SVG图标样式 */
+        .icon {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .icon-sm {
+            width: 16px;
+            height: 16px;
+        }
+        .icon-lg {
+            width: 32px;
+            height: 32px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white shadow-sm sticky top-0 z-50">
+            <div class="px-4 py-3">
+                <div class="flex items-center justify-between mb-3">
+                    <h1 class="text-xl font-bold text-gray-900">邻盟营销助手</h1>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="showLocationModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        </button>
+                        <button onclick="showMerchantSwitch()" class="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium">
+                            切换商家端
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex items-center bg-gray-100 rounded-lg px-3 py-2 mb-3">
+                    <svg class="icon text-gray-400 mr-2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="search-input" placeholder="搜索商家、活动、优惠..." class="bg-transparent flex-1 outline-none text-sm">
+                </div>
+                
+                <div class="flex space-x-2 overflow-x-auto pb-2">
+                    <button class="filter-btn active px-4 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm whitespace-nowrap" data-filter="all">全部</button>
+                    <button class="filter-btn px-4 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm whitespace-nowrap" data-filter="new-store">新店开业</button>
+                    <button class="filter-btn px-4 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm whitespace-nowrap" data-filter="discount">限时折扣</button>
+                    <button class="filter-btn px-4 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm whitespace-nowrap" data-filter="package">套餐优惠</button>
+                    <button class="filter-btn px-4 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm whitespace-nowrap" data-filter="service">上门服务</button>
+                    <button class="filter-btn px-4 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm whitespace-nowrap" data-filter="group-buy">拼团集赞</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-4">
+            <div id="activity-list" class="space-y-4">
+            </div>
+            
+            <div id="loading" class="hidden text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+                <p class="text-gray-500 mt-2">加载中...</p>
+            </div>
+            
+            <div id="empty" class="hidden text-center py-12">
+                <svg class="icon-lg text-gray-400 mx-auto mb-4" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                <p class="text-gray-500">暂无活动</p>
+            </div>
+        </div>
+        
+        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2">
+            <div class="flex justify-around max-w-4xl mx-auto">
+                <button class="flex flex-col items-center py-2 px-4 text-orange-600">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    <span class="text-xs mt-1">首页</span>
+                </button>
+                <button onclick="showCollections()" class="flex flex-col items-center py-2 px-4 text-gray-600 hover:text-orange-600">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                    <span class="text-xs mt-1">收藏</span>
+                </button>
+                <button onclick="showOrders()" class="flex flex-col items-center py-2 px-4 text-gray-600 hover:text-orange-600">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    <span class="text-xs mt-1">订单</span>
+                </button>
+                <button onclick="showProfile()" class="flex flex-col items-center py-2 px-4 text-gray-600 hover:text-orange-600">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span class="text-xs mt-1">我的</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+    
+    <div id="location-modal" class="modal">
+        <div class="bg-white rounded-xl p-6 mx-4 max-w-sm w-full">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">选择社区</h3>
+                <button onclick="hideLocationModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <button onclick="selectCommunity('幸福社区')" class="w-full px-4 py-3 border border-gray-200 rounded-lg text-left hover:border-orange-500 hover:bg-orange-50 transition-colors">
+                    <p class="font-medium text-gray-900">幸福社区</p>
+                    <p class="text-sm text-gray-500">北京市朝阳区</p>
+                </button>
+                <button onclick="selectCommunity('阳光花园')" class="w-full px-4 py-3 border border-gray-200 rounded-lg text-left hover:border-orange-500 hover:bg-orange-50 transition-colors">
+                    <p class="font-medium text-gray-900">阳光花园</p>
+                    <p class="text-sm text-gray-500">北京市海淀区</p>
+                </button>
+                <button onclick="selectCommunity('绿城小区')" class="w-full px-4 py-3 border border-gray-200 rounded-lg text-left hover:border-orange-500 hover:bg-orange-50 transition-colors">
+                    <p class="font-medium text-gray-900">绿城小区</p>
+                    <p class="text-sm text-gray-500">北京市西城区</p>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 使用真实图片的活动数据
+        const activities = [
+            {
+                id: 1,
+                title: '🎉 新店开业大酬宾！全场8折起',
+                content: '🎊 好消息！鲜果时光正式开业啦！\n\n📍 地址：幸福社区底商A栋101\n⏰ 营业时间：08:00-22:00\n\n🎁 开业福利：\n• 到店即送精美水果一份\n• 全场消费满50元立减10元\n• 会员首单享8折优惠\n\n🍎 今日特价：\n• 红富士苹果 5.99元/斤\n• 香蕉 3.99元/斤\n• 橙子 4.99元/斤\n\n新鲜水果，品质保证，欢迎选购！',
+                coverImage: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=300&fit=crop',
+                images: [
+                    'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=300&fit=crop',
+                    'https://images.unsplash.com/photo-1609780447631-05b93e5a88ea?w=400&h=300&fit=crop',
+                    'https://images.unsplash.com/photo-1582979512210-99b6a53386f9?w=400&h=300&fit=crop'
+                ],
+                merchantId: 1,
+                merchantName: '鲜果时光',
+                merchantAvatar: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=100&h=100&fit=crop',
+                merchantLogo: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=200&h=200&fit=crop',
+                industry: '生鲜',
+                distance: '500m',
+                templateType: 'new-store',
+                tags: ['新店开业', '生鲜', '5折', '到店礼'],
+                startTime: '2026-03-08',
+                endTime: '2026-03-31',
+                views: 156,
+                likes: 23,
+                shares: 8,
+                comments: 5,
+                orders: 12
+            },
+            {
+                id: 2,
+                title: '🔥 周末特惠！新鲜水果限时抢购',
+                content: '🍊 周末特惠活动来啦！\n\n⏰ 活动时间：本周六日 08:00-20:00\n\n💰 特价商品：\n• 泰国榴莲 29.9元/斤（原价39.9元）\n• 进口车厘子 39.9元/斤（原价59.9元）\n• 红颜草莓 19.9元/盒（原价29.9元）\n• 蓝莓 9.9元/盒（原价15.9元）\n\n📦 满50元免费配送上门\n📞 预订电话：13800138000\n\n数量有限，先到先得！',
+                coverImage: 'https://images.unsplash.com/photo-1528825871115-3581a5387919?w=400&h=300&fit=crop',
+                images: [
+                    'https://images.unsplash.com/photo-1528825871115-3581a5387919?w=400&h=300&fit=crop',
+                    'https://images.unsplash.com/photo-1528821128474-27f963b062bf?w=400&h=300&fit=crop'
+                ],
+                merchantId: 1,
+                merchantName: '鲜果时光',
+                merchantAvatar: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=100&h=100&fit=crop',
+                merchantLogo: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=200&h=200&fit=crop',
+                industry: '生鲜',
+                distance: '500m',
+                templateType: 'discount',
+                tags: ['限时折扣', '特价', '生鲜'],
+                startTime: '2026-03-08',
+                endTime: '2026-03-15',
+                views: 89,
+                likes: 15,
+                shares: 3,
+                comments: 2,
+                orders: 8
+            },
+            {
+                id: 3,
+                title: '🏠 专业家政服务，让家更温馨',
+                content: '🏠 上门服务，专业便捷\n\n📋 服务项目：\n• 家庭保洁 50元/小时\n• 家电清洗 80元起\n• 月嫂服务 8000元/月\n• 育儿嫂 6000元/月\n\n📍 服务范围：幸福社区及周边3公里\n⏰ 服务时间：8:00-20:00\n📞 预约电话：13800138001\n\n✅ 专业团队，持证上岗\n✅ 品质保证，不满意重做\n✅ 价格透明，无隐形消费\n\n欢迎预约咨询！',
+                coverImage: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&h=300&fit=crop',
+                images: [
+                    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&h=300&fit=crop',
+                    'https://images.unsplash.com/photo-1563453392212-326f5e854473?w=400&h=300&fit=crop'
+                ],
+                merchantId: 2,
+                merchantName: '好帮手家政',
+                merchantAvatar: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=100&h=100&fit=crop',
+                merchantLogo: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=200&h=200&fit=crop',
+                industry: '家政',
+                distance: '800m',
+                templateType: 'service',
+                tags: ['上门服务', '家政', '预约'],
+                startTime: '2026-03-08',
+                endTime: '2026-12-31',
+                views: 189,
+                likes: 67,
+                shares: 34,
+                comments: 18,
+                orders: 12
+            },
+            {
+                id: 4,
+                title: '✨ 拼团集赞！精美水果礼盒',
+                content: '🎉 拼团集赞活动！\n\n📦 活动商品：进口水果礼盒\n💰 拼团价格：99元（原价168元）\n👥 拼团人数：3人成团\n⏰ 活动时间：2026-03-08至2026-03-20\n🎁 分享福利：集赞20个送精美礼品一份\n\n礼盒包含：\n• 进口车厘子 500g\n• 红颜草莓 300g\n• 蓝莓 2盒\n• 精美包装\n\n快来邀请好友一起拼团吧！',
+                coverImage: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=300&fit=crop',
+                images: [
+                    'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=300&fit=crop',
+                    'https://images.unsplash.com/photo-1601312378427-b239537f2831?w=400&h=300&fit=crop',
+                    'https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?w=400&h=300&fit=crop'
+                ],
+                merchantId: 1,
+                merchantName: '鲜果时光',
+                merchantAvatar: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=100&h=100&fit=crop',
+                merchantLogo: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=200&h=200&fit=crop',
+                industry: '生鲜',
+                distance: '500m',
+                templateType: 'group-buy',
+                tags: ['拼团集赞', '生鲜', '特价'],
+                startTime: '2026-03-08',
+                endTime: '2026-03-20',
+                views: 345,
+                likes: 123,
+                shares: 67,
+                comments: 34,
+                orders: 25
+            },
+            {
+                id: 5,
+                title: '💆 美容护理套餐，焕发光彩',
+                content: '✨ 超值套餐推荐！\n\n📦 套餐名称：春季焕颜护理套餐\n💎 套餐内容：\n• 深层清洁面部护理 60分钟\n• 眼部舒缓护理 30分钟\n• 肩颈放松按摩 30分钟\n• 免费皮肤检测\n\n💰 套餐价格：299元（原价588元）\n⏰ 有效期：2026-03-08至2026-06-30\n\n🎁 额外赠送：\n• 价值88元面膜1盒\n• 下次消费8折券\n\n比单点更划算，快来体验吧！',
+                coverImage: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=300&fit=crop',
+                images: [
+                    'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=300&fit=crop',
+                    'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop',
+                    'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=300&fit=crop'
+                ],
+                merchantId: 3,
+                merchantName: '美丽人生美容',
+                merchantAvatar: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=100&h=100&fit=crop',
+                merchantLogo: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200&h=200&fit=crop',
+                industry: '美容',
+                distance: '1.2km',
+                templateType: 'package',
+                tags: ['套餐优惠', '美容', '特价'],
+                startTime: '2026-03-08',
+                endTime: '2026-06-30',
+                views: 234,
+                likes: 78,
+                shares: 41,
+                comments: 22,
+                orders: 18
+            },
+            {
+                id: 6,
+                title: '📚 会员专享！积分双倍送',
+                content: '🎊 亲爱的会员朋友们：\n\n🎉 本月会员专享福利来啦！\n\n✅ 会员特权：\n• 全场商品9折优惠\n• 积分双倍送（消费1元积2分）\n• 生日当月额外赠送100积分\n• 100积分可兑换精美礼品一份\n\n🎁 本月推荐：\n• 进口水果礼盒 会员价88元\n• 有机蔬菜组合 会员价35元\n• 鲜榨果汁系列 会员价第二杯半价\n\n成为会员，享受更多优惠！',
+                coverImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
+                images: [
+                    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
+                    'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop'
+                ],
+                merchantId: 4,
+                merchantName: '书香阁书店',
+                merchantAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
+                merchantLogo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop',
+                industry: '零售',
+                distance: '600m',
+                templateType: 'member',
+                tags: ['会员专享', '零售', '积分兑换'],
+                startTime: '2026-03-08',
+                endTime: '2026-03-31',
+                views: 167,
+                likes: 56,
+                shares: 28,
+                comments: 15,
+                orders: 10
+            }
+        ];
+        
+        let currentFilter = 'all';
+        let currentSearch = '';
+        let currentCommunity = '幸福社区';
+        
+        function init() {
+            loadActivities();
+            setupEventListeners();
+        }
+        
+        function setupEventListeners() {
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('input', (e) => {
+                currentSearch = e.target.value.toLowerCase();
+                loadActivities();
+            });
+            
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.filter;
+                    loadActivities();
+                });
+            });
+        }
+        
+        function loadActivities() {
+            const activityList = document.getElementById('activity-list');
+            const loading = document.getElementById('loading');
+            const empty = document.getElementById('empty');
+            
+            activityList.innerHTML = '';
+            loading.classList.remove('hidden');
+            empty.classList.add('hidden');
+            
+            setTimeout(() => {
+                loading.classList.add('hidden');
+                
+                let filteredActivities = activities;
+                
+                if (currentFilter !== 'all') {
+                    filteredActivities = filteredActivities.filter(a => a.templateType === currentFilter);
+                }
+                
+                if (currentSearch) {
+                    filteredActivities = filteredActivities.filter(a => 
+                        a.title.toLowerCase().includes(currentSearch) ||
+                        a.merchantName.toLowerCase().includes(currentSearch) ||
+                        a.tags.some(tag => tag.toLowerCase().includes(currentSearch))
+                    );
+                }
+                
+                if (filteredActivities.length === 0) {
+                    empty.classList.remove('hidden');
+                    return;
+                }
+                
+                filteredActivities.forEach(activity => {
+                    const card = createActivityCard(activity);
+                    activityList.appendChild(card);
+                });
+            }, 500);
+        }
+        
+        function createActivityCard(activity) {
+            const card = document.createElement('div');
+            card.className = 'activity-card bg-white rounded-xl shadow-sm overflow-hidden cursor-pointer';
+            card.onclick = () => showActivityDetail(activity);
+            
+            const tagsHtml = activity.tags.map(tag => {
+                const tagClass = getTagClass(tag);
+                return `<span class="tag ${tagClass}">${tag}</span>`;
+            }).join('');
+            
+            card.innerHTML = `
+                <img src="${activity.coverImage}" alt="${activity.title}" class="w-full h-48 object-cover">
+                <div class="p-4">
+                    <div class="flex items-center mb-2">
+                        <img src="${activity.merchantAvatar}" alt="${activity.merchantName}" class="w-8 h-8 rounded-full mr-2">
+                        <span class="text-sm text-gray-600">${activity.merchantName}</span>
+                        <span class="text-xs text-gray-400 ml-auto">${activity.distance}</span>
+                    </div>
+                    <h3 class="font-bold text-gray-900 mb-2 line-clamp-2">${activity.title}</h3>
+                    <div class="mb-2">
+                        ${tagsHtml}
+                    </div>
+                    <div class="flex items-center text-xs text-gray-500">
+                        <span class="flex items-center mr-3">
+                            <svg class="icon-sm mr-1" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            ${activity.views}
+                        </span>
+                        <span class="flex items-center mr-3">
+                            <svg class="icon-sm mr-1" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                            ${activity.likes}
+                        </span>
+                        <span class="flex items-center">
+                            <svg class="icon-sm mr-1" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                            ${activity.comments}
+                        </span>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        function getTagClass(tag) {
+            const tagClasses = {
+                '限时折扣': 'tag-orange',
+                '新店开业': 'tag-blue',
+                '上门服务': 'tag-green',
+                '拼团集赞': 'tag-purple',
+                '会员专享': 'tag-red',
+                '生鲜': 'tag-orange',
+                '美容': 'tag-purple',
+                '家政': 'tag-green',
+                '亲子': 'tag-blue',
+                '零售': 'tag-red',
+                '特价': 'tag-orange',
+                '5折': 'tag-orange',
+                '预约': 'tag-green',
+                '教育': 'tag-blue',
+                '积分兑换': 'tag-red'
+            };
+            return tagClasses[tag] || 'tag-blue';
+        }
+        
+        function showActivityDetail(activity) {
+            localStorage.setItem('currentActivity', JSON.stringify(activity));
+            window.location.href = 'detail-offline.html';
+        }
+        
+        function showLocationModal() {
+            document.getElementById('location-modal').classList.add('show');
+        }
+        
+        function hideLocationModal() {
+            document.getElementById('location-modal').classList.remove('show');
+        }
+        
+        function selectCommunity(community) {
+            currentCommunity = community;
+            showToast(`已切换到${community}`);
+            hideLocationModal();
+            loadActivities();
+        }
+        
+        function showMerchantSwitch() {
+            window.location.href = '../../merchant/login-offline.html';
+        }
+        
+        function showCollections() {
+            window.location.href = 'collections-offline.html';
+        }
+        
+        function showOrders() {
+            window.location.href = 'orders-offline.html';
+        }
+        
+        function showProfile() {
+            window.location.href = 'profile-offline.html';
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

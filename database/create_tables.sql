@@ -1,0 +1,661 @@
+-- ============================================
+-- 邻盟营销助手 - 完整数据库创建脚本
+-- 数据库: MySQL 8.0+
+-- 字符集: utf8mb4
+-- 创建时间: 2026-03-23
+-- ============================================
+
+-- 创建数据库
+DROP DATABASE IF EXISTS neighbor_alliance;
+CREATE DATABASE neighbor_alliance 
+CHARACTER SET utf8mb4 
+COLLATE utf8mb4_unicode_ci;
+
+USE neighbor_alliance;
+
+-- ============================================
+-- 一、基础字典表
+-- ============================================
+
+-- 1.1 社区字典表
+CREATE TABLE IF NOT EXISTS communities (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '社区ID',
+    name VARCHAR(100) NOT NULL COMMENT '社区名称',
+    city VARCHAR(50) NOT NULL COMMENT '所属城市',
+    district VARCHAR(50) NOT NULL COMMENT '所属区县',
+    street VARCHAR(100) DEFAULT NULL COMMENT '所属街道',
+    address VARCHAR(255) DEFAULT NULL COMMENT '详细地址',
+    latitude DECIMAL(10, 7) DEFAULT NULL COMMENT '纬度',
+    longitude DECIMAL(10, 7) DEFAULT NULL COMMENT '经度',
+    population INT DEFAULT 0 COMMENT '常住人口',
+    household_count INT DEFAULT 0 COMMENT '户数',
+    area DECIMAL(10, 2) DEFAULT 0.00 COMMENT '面积（平方公里）',
+    contact_person VARCHAR(50) DEFAULT NULL COMMENT '联系人',
+    contact_phone VARCHAR(20) DEFAULT NULL COMMENT '联系电话',
+    description TEXT COMMENT '社区简介',
+    status TINYINT DEFAULT 1 COMMENT '状态：0-禁用，1-正常',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    KEY idx_name (name),
+    KEY idx_city_district (city, district),
+    KEY idx_location (latitude, longitude),
+    KEY idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='社区字典表';
+
+-- 1.2 行业分类表
+CREATE TABLE IF NOT EXISTS industries (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '行业ID',
+    name VARCHAR(50) NOT NULL COMMENT '行业名称',
+    icon VARCHAR(255) DEFAULT NULL COMMENT '行业图标',
+    description VARCHAR(500) DEFAULT NULL COMMENT '行业描述',
+    parent_id INT UNSIGNED DEFAULT 0 COMMENT '父级ID（支持多级分类）',
+    level TINYINT DEFAULT 1 COMMENT '层级：1-一级，2-二级，3-三级',
+    sort_order INT DEFAULT 0 COMMENT '排序（数字越小越靠前）',
+    status TINYINT DEFAULT 1 COMMENT '状态：0-禁用，1-正常',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    KEY idx_parent_id (parent_id),
+    KEY idx_level (level),
+    KEY idx_sort_order (sort_order),
+    KEY idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='行业分类表';
+
+-- 1.3 营销模板表
+CREATE TABLE IF NOT EXISTS marketing_templates (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '模板ID',
+    code VARCHAR(50) NOT NULL COMMENT '模板代码',
+    name VARCHAR(100) NOT NULL COMMENT '模板名称',
+    category VARCHAR(50) NOT NULL COMMENT '模板分类：promotion-促销，notice-通知，service-服务，other-其他',
+    type VARCHAR(50) NOT NULL COMMENT '模板类型：new-store-新店开业，discount-限时折扣等',
+    icon VARCHAR(255) DEFAULT NULL COMMENT '模板图标',
+    cover_image VARCHAR(255) DEFAULT NULL COMMENT '模板封面图',
+    title_template VARCHAR(255) NOT NULL COMMENT '标题模板',
+    content_template TEXT NOT NULL COMMENT '内容模板',
+    fields JSON COMMENT '表单字段配置（JSON格式）',
+    ai_direction TEXT COMMENT 'AI优化方向说明',
+    applicable_industries JSON COMMENT '适用行业ID列表',
+    sort_order INT DEFAULT 0 COMMENT '排序',
+    use_count INT DEFAULT 0 COMMENT '使用次数',
+    status TINYINT DEFAULT 1 COMMENT '状态：0-禁用，1-正常',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_code (code),
+    KEY idx_category (category),
+    KEY idx_type (type),
+    KEY idx_sort_order (sort_order),
+    KEY idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='营销模板表';
+
+-- ============================================
+-- 二、商家端表结构
+-- ============================================
+
+-- 2.1 商家账号表
+CREATE TABLE IF NOT EXISTS merchant_accounts (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '商家账号ID',
+    openid VARCHAR(100) DEFAULT NULL COMMENT '微信OpenID',
+    unionid VARCHAR(100) DEFAULT NULL COMMENT '微信UnionID',
+    phone VARCHAR(20) NOT NULL COMMENT '手机号',
+    password VARCHAR(255) DEFAULT NULL COMMENT '密码（bcrypt加密）',
+    salt VARCHAR(32) DEFAULT NULL COMMENT '密码盐值',
+    login_type TINYINT DEFAULT 1 COMMENT '登录方式：1-手机号，2-微信',
+    last_login_time DATETIME DEFAULT NULL COMMENT '最后登录时间',
+    last_login_ip VARCHAR(50) DEFAULT NULL COMMENT '最后登录IP',
+    login_count INT DEFAULT 0 COMMENT '登录次数',
+    status TINYINT DEFAULT 1 COMMENT '状态：0-禁用，1-正常，2-待审核',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_phone (phone),
+    UNIQUE KEY uk_openid (openid),
+    KEY idx_status (status),
+    KEY idx_create_time (create_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='商家账号表';
+
+-- 2.2 商家信息表
+CREATE TABLE IF NOT EXISTS merchant_info (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '商家信息ID',
+    merchant_id BIGINT UNSIGNED NOT NULL COMMENT '商家账号ID',
+    name VARCHAR(100) NOT NULL COMMENT '店铺名称',
+    logo VARCHAR(255) DEFAULT NULL COMMENT '店铺Logo',
+    cover_image VARCHAR(255) DEFAULT NULL COMMENT '店铺封面图',
+    contact_name VARCHAR(50) DEFAULT NULL COMMENT '联系人姓名',
+    contact_phone VARCHAR(20) DEFAULT NULL COMMENT '联系电话',
+    industry_id INT UNSIGNED DEFAULT NULL COMMENT '行业ID',
+    community_id INT UNSIGNED DEFAULT NULL COMMENT '所属社区ID',
+    address VARCHAR(255) NOT NULL COMMENT '店铺地址',
+    latitude DECIMAL(10, 7) DEFAULT NULL COMMENT '纬度',
+    longitude DECIMAL(10, 7) DEFAULT NULL COMMENT '经度',
+    business_hours VARCHAR(100) DEFAULT '08:00-22:00' COMMENT '营业时间',
+    business_license VARCHAR(255) DEFAULT NULL COMMENT '营业执照URL',
+    license_no VARCHAR(50) DEFAULT NULL COMMENT '营业执照号',
+    description TEXT COMMENT '店铺简介',
+    tags JSON COMMENT '店铺标签',
+    rating DECIMAL(2, 1) DEFAULT 5.0 COMMENT '店铺评分（1-5）',
+    rating_count INT DEFAULT 0 COMMENT '评分人数',
+    follow_count INT DEFAULT 0 COMMENT '关注人数',
+    view_count INT DEFAULT 0 COMMENT '浏览次数',
+    verify_status TINYINT DEFAULT 0 COMMENT '认证状态：0-未认证，1-已认证，2-认证失败',
+    verify_time DATETIME DEFAULT NULL COMMENT '认证时间',
+    status TINYINT DEFAULT 1 COMMENT '状态：0-禁用，1-正常',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_merchant_id (merchant_id),
+    KEY idx_industry_id (industry_id),
+    KEY idx_community_id (community_id),
+    KEY idx_location (latitude, longitude),
+    KEY idx_rating (rating),
+    KEY idx_verify_status (verify_status),
+    KEY idx_status (status),
+    FOREIGN KEY (merchant_id) REFERENCES merchant_accounts(id) ON DELETE CASCADE,
+    FOREIGN KEY (industry_id) REFERENCES industries(id) ON DELETE SET NULL,
+    FOREIGN KEY (community_id) REFERENCES communities(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='商家信息表';
+
+-- 2.3 商家会员表
+CREATE TABLE IF NOT EXISTS merchant_memberships (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '会员ID',
+    merchant_id BIGINT UNSIGNED NOT NULL COMMENT '商家ID',
+    level TINYINT DEFAULT 1 COMMENT '会员等级：1-普通，2-银卡，3-金卡，4-钻石',
+    start_time DATETIME DEFAULT NULL COMMENT '会员开始时间',
+    end_time DATETIME DEFAULT NULL COMMENT '会员结束时间',
+    points INT DEFAULT 0 COMMENT '积分',
+    total_amount DECIMAL(10, 2) DEFAULT 0.00 COMMENT '累计消费金额',
+    benefits JSON COMMENT '会员权益（JSON格式）',
+    status TINYINT DEFAULT 1 COMMENT '状态：0-过期，1-正常',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_merchant_id (merchant_id),
+    KEY idx_level (level),
+    KEY idx_end_time (end_time),
+    FOREIGN KEY (merchant_id) REFERENCES merchant_accounts(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='商家会员表';
+
+-- ============================================
+-- 三、居民端表结构
+-- ============================================
+
+-- 3.1 居民用户表
+CREATE TABLE IF NOT EXISTS resident_users (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '用户ID',
+    openid VARCHAR(100) DEFAULT NULL COMMENT '微信OpenID',
+    unionid VARCHAR(100) DEFAULT NULL COMMENT '微信UnionID',
+    phone VARCHAR(20) DEFAULT NULL COMMENT '手机号',
+    nickname VARCHAR(50) DEFAULT NULL COMMENT '昵称',
+    avatar VARCHAR(255) DEFAULT NULL COMMENT '头像URL',
+    gender TINYINT DEFAULT 0 COMMENT '性别：0-未知，1-男，2-女',
+    birthday DATE DEFAULT NULL COMMENT '生日',
+    community_id INT UNSIGNED DEFAULT NULL COMMENT '所属社区ID',
+    address VARCHAR(255) DEFAULT NULL COMMENT '详细地址',
+    member_level TINYINT DEFAULT 0 COMMENT '会员等级：0-普通，1-银卡，2-金卡，3-钻石',
+    points INT DEFAULT 0 COMMENT '积分',
+    balance DECIMAL(10, 2) DEFAULT 0.00 COMMENT '余额',
+    last_login_time DATETIME DEFAULT NULL COMMENT '最后登录时间',
+    last_login_ip VARCHAR(50) DEFAULT NULL COMMENT '最后登录IP',
+    status TINYINT DEFAULT 1 COMMENT '状态：0-禁用，1-正常',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_openid (openid),
+    KEY idx_phone (phone),
+    KEY idx_community_id (community_id),
+    KEY idx_member_level (member_level),
+    KEY idx_status (status),
+    FOREIGN KEY (community_id) REFERENCES communities(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='居民用户表';
+
+-- 3.2 居民收货地址表
+CREATE TABLE IF NOT EXISTS resident_addresses (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '地址ID',
+    user_id BIGINT UNSIGNED NOT NULL COMMENT '用户ID',
+    contact_name VARCHAR(50) NOT NULL COMMENT '联系人姓名',
+    contact_phone VARCHAR(20) NOT NULL COMMENT '联系电话',
+    province VARCHAR(50) DEFAULT NULL COMMENT '省',
+    city VARCHAR(50) DEFAULT NULL COMMENT '市',
+    district VARCHAR(50) DEFAULT NULL COMMENT '区',
+    address VARCHAR(255) NOT NULL COMMENT '详细地址',
+    latitude DECIMAL(10, 7) DEFAULT NULL COMMENT '纬度',
+    longitude DECIMAL(10, 7) DEFAULT NULL COMMENT '经度',
+    is_default TINYINT DEFAULT 0 COMMENT '是否默认：0-否，1-是',
+    status TINYINT DEFAULT 1 COMMENT '状态：0-删除，1-正常',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    KEY idx_user_id (user_id),
+    KEY idx_is_default (is_default),
+    FOREIGN KEY (user_id) REFERENCES resident_users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='居民收货地址表';
+
+-- ============================================
+-- 四、营销活动表结构
+-- ============================================
+
+-- 4.1 营销活动表
+CREATE TABLE IF NOT EXISTS marketing_activities (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '活动ID',
+    merchant_id BIGINT UNSIGNED NOT NULL COMMENT '商家ID',
+    template_id INT UNSIGNED DEFAULT NULL COMMENT '模板ID',
+    title VARCHAR(200) NOT NULL COMMENT '活动标题',
+    content TEXT NOT NULL COMMENT '活动内容',
+    cover_image VARCHAR(255) DEFAULT NULL COMMENT '封面图',
+    images JSON COMMENT '图片列表（JSON数组）',
+    video_url VARCHAR(255) DEFAULT NULL COMMENT '视频URL',
+    tags JSON COMMENT '标签列表（JSON数组）',
+    activity_type VARCHAR(50) DEFAULT NULL COMMENT '活动类型',
+    start_time DATETIME DEFAULT NULL COMMENT '活动开始时间',
+    end_time DATETIME DEFAULT NULL COMMENT '活动结束时间',
+    publish_time DATETIME DEFAULT NULL COMMENT '发布时间',
+    expire_time DATETIME DEFAULT NULL COMMENT '过期时间',
+    status TINYINT DEFAULT 0 COMMENT '状态：0-草稿，1-已发布，2-已下架，3-已过期',
+    view_count INT DEFAULT 0 COMMENT '浏览量',
+    like_count INT DEFAULT 0 COMMENT '点赞数',
+    share_count INT DEFAULT 0 COMMENT '分享数',
+    comment_count INT DEFAULT 0 COMMENT '评论数',
+    collection_count INT DEFAULT 0 COMMENT '收藏数',
+    order_count INT DEFAULT 0 COMMENT '订单数',
+    order_amount DECIMAL(10, 2) DEFAULT 0.00 COMMENT '订单金额',
+    is_top TINYINT DEFAULT 0 COMMENT '是否置顶：0-否，1-是',
+    top_time DATETIME DEFAULT NULL COMMENT '置顶时间',
+    is_recommend TINYINT DEFAULT 0 COMMENT '是否推荐：0-否，1-是',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    KEY idx_merchant_id (merchant_id),
+    KEY idx_template_id (template_id),
+    KEY idx_status (status),
+    KEY idx_publish_time (publish_time),
+    KEY idx_start_end_time (start_time, end_time),
+    KEY idx_view_count (view_count),
+    KEY idx_is_top (is_top),
+    KEY idx_is_recommend (is_recommend),
+    FULLTEXT KEY ft_title_content (title, content),
+    FOREIGN KEY (merchant_id) REFERENCES merchant_accounts(id) ON DELETE CASCADE,
+    FOREIGN KEY (template_id) REFERENCES marketing_templates(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='营销活动表';
+
+-- 4.2 活动草稿表
+CREATE TABLE IF NOT EXISTS activity_drafts (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '草稿ID',
+    merchant_id BIGINT UNSIGNED NOT NULL COMMENT '商家ID',
+    template_id INT UNSIGNED DEFAULT NULL COMMENT '模板ID',
+    title VARCHAR(200) DEFAULT NULL COMMENT '草稿标题',
+    content TEXT COMMENT '草稿内容',
+    cover_image VARCHAR(255) DEFAULT NULL COMMENT '封面图',
+    images JSON COMMENT '图片列表',
+    video_url VARCHAR(255) DEFAULT NULL COMMENT '视频URL',
+    tags JSON COMMENT '标签列表',
+    activity_data JSON COMMENT '活动数据（JSON格式）',
+    auto_save TINYINT DEFAULT 0 COMMENT '是否自动保存：0-否，1-是',
+    status TINYINT DEFAULT 1 COMMENT '状态：0-删除，1-正常',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    KEY idx_merchant_id (merchant_id),
+    KEY idx_update_time (update_time),
+    FOREIGN KEY (merchant_id) REFERENCES merchant_accounts(id) ON DELETE CASCADE,
+    FOREIGN KEY (template_id) REFERENCES marketing_templates(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='活动草稿表';
+
+-- 4.3 多渠道内容表
+CREATE TABLE IF NOT EXISTS channel_contents (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '渠道内容ID',
+    activity_id BIGINT UNSIGNED NOT NULL COMMENT '活动ID',
+    channel_type VARCHAR(50) NOT NULL COMMENT '渠道类型：moments-朋友圈，xiaohongshu-小红书，douyin-抖音，wechat-微信群',
+    title VARCHAR(200) DEFAULT NULL COMMENT '渠道标题',
+    content TEXT COMMENT '渠道内容',
+    images JSON COMMENT '渠道图片列表',
+    video_url VARCHAR(255) DEFAULT NULL COMMENT '渠道视频URL',
+    publish_status TINYINT DEFAULT 0 COMMENT '发布状态：0-未发布，1-已发布，2-发布失败',
+    publish_time DATETIME DEFAULT NULL COMMENT '发布时间',
+    publish_result JSON COMMENT '发布结果（JSON格式）',
+    error_msg VARCHAR(500) DEFAULT NULL COMMENT '错误信息',
+    external_id VARCHAR(100) DEFAULT NULL COMMENT '外部平台内容ID',
+    external_url VARCHAR(255) DEFAULT NULL COMMENT '外部平台内容URL',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    KEY idx_activity_id (activity_id),
+    KEY idx_channel_type (channel_type),
+    KEY idx_publish_status (publish_status),
+    KEY idx_external_id (external_id),
+    FOREIGN KEY (activity_id) REFERENCES marketing_activities(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='多渠道内容表';
+
+-- ============================================
+-- 五、AI服务表结构
+-- ============================================
+
+-- 5.1 AI优化记录表
+CREATE TABLE IF NOT EXISTS ai_optimization_logs (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '优化记录ID',
+    merchant_id BIGINT UNSIGNED NOT NULL COMMENT '商家ID',
+    activity_id BIGINT UNSIGNED DEFAULT NULL COMMENT '活动ID',
+    optimization_type VARCHAR(50) NOT NULL COMMENT '优化类型：content-文案，layout-排版，emoji-表情，keyword-关键词',
+    original_content TEXT COMMENT '原始内容',
+    optimized_content TEXT COMMENT '优化后内容',
+    ai_model VARCHAR(50) DEFAULT NULL COMMENT 'AI模型',
+    tokens_used INT DEFAULT 0 COMMENT '使用Token数',
+    cost_amount DECIMAL(10, 4) DEFAULT 0.0000 COMMENT '费用金额',
+    response_time INT DEFAULT 0 COMMENT '响应时间（毫秒）',
+    is_adopted TINYINT DEFAULT 0 COMMENT '是否采纳：0-否，1-是',
+    rating TINYINT DEFAULT NULL COMMENT '用户评分（1-5）',
+    feedback TEXT COMMENT '用户反馈',
+    status TINYINT DEFAULT 1 COMMENT '状态：0-失败，1-成功',
+    error_msg VARCHAR(500) DEFAULT NULL COMMENT '错误信息',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (id),
+    KEY idx_merchant_id (merchant_id),
+    KEY idx_activity_id (activity_id),
+    KEY idx_optimization_type (optimization_type),
+    KEY idx_create_time (create_time),
+    FOREIGN KEY (merchant_id) REFERENCES merchant_accounts(id) ON DELETE CASCADE,
+    FOREIGN KEY (activity_id) REFERENCES marketing_activities(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='AI优化记录表';
+
+-- 5.2 AI配置表
+CREATE TABLE IF NOT EXISTS ai_configs (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '配置ID',
+    config_key VARCHAR(100) NOT NULL COMMENT '配置键',
+    config_value TEXT COMMENT '配置值',
+    config_type VARCHAR(50) DEFAULT 'text' COMMENT '配置类型：text-文本，json-JSON，number-数字',
+    description VARCHAR(500) DEFAULT NULL COMMENT '配置描述',
+    is_public TINYINT DEFAULT 0 COMMENT '是否公开：0-否，1-是',
+    status TINYINT DEFAULT 1 COMMENT '状态：0-禁用，1-启用',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_config_key (config_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='AI配置表';
+
+-- ============================================
+-- 六、用户交互表结构
+-- ============================================
+
+-- 6.1 用户收藏表
+CREATE TABLE IF NOT EXISTS user_collections (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '收藏ID',
+    user_id BIGINT UNSIGNED NOT NULL COMMENT '用户ID',
+    activity_id BIGINT UNSIGNED NOT NULL COMMENT '活动ID',
+    merchant_id BIGINT UNSIGNED NOT NULL COMMENT '商家ID',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_user_activity (user_id, activity_id),
+    KEY idx_user_id (user_id),
+    KEY idx_activity_id (activity_id),
+    KEY idx_merchant_id (merchant_id),
+    FOREIGN KEY (user_id) REFERENCES resident_users(id) ON DELETE CASCADE,
+    FOREIGN KEY (activity_id) REFERENCES marketing_activities(id) ON DELETE CASCADE,
+    FOREIGN KEY (merchant_id) REFERENCES merchant_accounts(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户收藏表';
+
+-- 6.2 用户关注表
+CREATE TABLE IF NOT EXISTS user_follows (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '关注ID',
+    user_id BIGINT UNSIGNED NOT NULL COMMENT '用户ID',
+    merchant_id BIGINT UNSIGNED NOT NULL COMMENT '商家ID',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_user_merchant (user_id, merchant_id),
+    KEY idx_user_id (user_id),
+    KEY idx_merchant_id (merchant_id),
+    FOREIGN KEY (user_id) REFERENCES resident_users(id) ON DELETE CASCADE,
+    FOREIGN KEY (merchant_id) REFERENCES merchant_accounts(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户关注表';
+
+-- 6.3 用户点赞表
+CREATE TABLE IF NOT EXISTS user_likes (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '点赞ID',
+    user_id BIGINT UNSIGNED NOT NULL COMMENT '用户ID',
+    activity_id BIGINT UNSIGNED NOT NULL COMMENT '活动ID',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_user_activity (user_id, activity_id),
+    KEY idx_user_id (user_id),
+    KEY idx_activity_id (activity_id),
+    FOREIGN KEY (user_id) REFERENCES resident_users(id) ON DELETE CASCADE,
+    FOREIGN KEY (activity_id) REFERENCES marketing_activities(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户点赞表';
+
+-- 6.4 用户评论表
+CREATE TABLE IF NOT EXISTS user_comments (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '评论ID',
+    user_id BIGINT UNSIGNED NOT NULL COMMENT '用户ID',
+    activity_id BIGINT UNSIGNED NOT NULL COMMENT '活动ID',
+    merchant_id BIGINT UNSIGNED NOT NULL COMMENT '商家ID',
+    parent_id BIGINT UNSIGNED DEFAULT 0 COMMENT '父评论ID（0表示一级评论）',
+    reply_user_id BIGINT UNSIGNED DEFAULT NULL COMMENT '回复用户ID',
+    content TEXT NOT NULL COMMENT '评论内容',
+    images JSON COMMENT '评论图片',
+    like_count INT DEFAULT 0 COMMENT '点赞数',
+    status TINYINT DEFAULT 1 COMMENT '状态：0-删除，1-正常，2-屏蔽',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    KEY idx_user_id (user_id),
+    KEY idx_activity_id (activity_id),
+    KEY idx_merchant_id (merchant_id),
+    KEY idx_parent_id (parent_id),
+    KEY idx_create_time (create_time),
+    FOREIGN KEY (user_id) REFERENCES resident_users(id) ON DELETE CASCADE,
+    FOREIGN KEY (activity_id) REFERENCES marketing_activities(id) ON DELETE CASCADE,
+    FOREIGN KEY (merchant_id) REFERENCES merchant_accounts(id) ON DELETE CASCADE,
+    FOREIGN KEY (reply_user_id) REFERENCES resident_users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户评论表';
+
+-- 6.5 用户咨询表
+CREATE TABLE IF NOT EXISTS user_consultations (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '咨询ID',
+    user_id BIGINT UNSIGNED NOT NULL COMMENT '用户ID',
+    merchant_id BIGINT UNSIGNED NOT NULL COMMENT '商家ID',
+    activity_id BIGINT UNSIGNED DEFAULT NULL COMMENT '活动ID',
+    content TEXT NOT NULL COMMENT '咨询内容',
+    images JSON COMMENT '咨询图片',
+    reply_content TEXT COMMENT '商家回复',
+    reply_time DATETIME DEFAULT NULL COMMENT '回复时间',
+    status TINYINT DEFAULT 0 COMMENT '状态：0-待回复，1-已回复',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    KEY idx_user_id (user_id),
+    KEY idx_merchant_id (merchant_id),
+    KEY idx_activity_id (activity_id),
+    KEY idx_status (status),
+    KEY idx_create_time (create_time),
+    FOREIGN KEY (user_id) REFERENCES resident_users(id) ON DELETE CASCADE,
+    FOREIGN KEY (merchant_id) REFERENCES merchant_accounts(id) ON DELETE CASCADE,
+    FOREIGN KEY (activity_id) REFERENCES marketing_activities(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户咨询表';
+
+-- ============================================
+-- 七、订单管理表结构
+-- ============================================
+
+-- 7.1 订单表
+CREATE TABLE IF NOT EXISTS orders (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '订单ID',
+    order_no VARCHAR(50) NOT NULL COMMENT '订单编号',
+    user_id BIGINT UNSIGNED NOT NULL COMMENT '用户ID',
+    merchant_id BIGINT UNSIGNED NOT NULL COMMENT '商家ID',
+    activity_id BIGINT UNSIGNED DEFAULT NULL COMMENT '活动ID',
+    order_type TINYINT DEFAULT 1 COMMENT '订单类型：1-商品，2-服务，3-预约',
+    service_name VARCHAR(255) NOT NULL COMMENT '服务/商品名称',
+    service_image VARCHAR(255) DEFAULT NULL COMMENT '服务/商品图片',
+    price DECIMAL(10, 2) NOT NULL COMMENT '单价',
+    quantity INT DEFAULT 1 COMMENT '数量',
+    total_amount DECIMAL(10, 2) NOT NULL COMMENT '总金额',
+    discount_amount DECIMAL(10, 2) DEFAULT 0.00 COMMENT '优惠金额',
+    pay_amount DECIMAL(10, 2) NOT NULL COMMENT '实付金额',
+    contact_name VARCHAR(50) DEFAULT NULL COMMENT '联系人姓名',
+    contact_phone VARCHAR(20) DEFAULT NULL COMMENT '联系人电话',
+    contact_address VARCHAR(255) DEFAULT NULL COMMENT '联系人地址',
+    appointment_time DATETIME DEFAULT NULL COMMENT '预约时间',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    status TINYINT DEFAULT 0 COMMENT '状态：0-待处理，1-已确认，2-进行中，3-已完成，4-已取消，5-已退款',
+    cancel_reason VARCHAR(255) DEFAULT NULL COMMENT '取消原因',
+    cancel_time DATETIME DEFAULT NULL COMMENT '取消时间',
+    complete_time DATETIME DEFAULT NULL COMMENT '完成时间',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_order_no (order_no),
+    KEY idx_user_id (user_id),
+    KEY idx_merchant_id (merchant_id),
+    KEY idx_activity_id (activity_id),
+    KEY idx_status (status),
+    KEY idx_create_time (create_time),
+    FOREIGN KEY (user_id) REFERENCES resident_users(id) ON DELETE CASCADE,
+    FOREIGN KEY (merchant_id) REFERENCES merchant_accounts(id) ON DELETE CASCADE,
+    FOREIGN KEY (activity_id) REFERENCES marketing_activities(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='订单表';
+
+-- 7.2 订单评价表
+CREATE TABLE IF NOT EXISTS order_reviews (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '评价ID',
+    order_id BIGINT UNSIGNED NOT NULL COMMENT '订单ID',
+    user_id BIGINT UNSIGNED NOT NULL COMMENT '用户ID',
+    merchant_id BIGINT UNSIGNED NOT NULL COMMENT '商家ID',
+    activity_id BIGINT UNSIGNED DEFAULT NULL COMMENT '活动ID',
+    rating TINYINT NOT NULL COMMENT '评分（1-5）',
+    content TEXT COMMENT '评价内容',
+    images JSON COMMENT '评价图片',
+    merchant_reply TEXT COMMENT '商家回复',
+    reply_time DATETIME DEFAULT NULL COMMENT '回复时间',
+    is_anonymous TINYINT DEFAULT 0 COMMENT '是否匿名：0-否，1-是',
+    status TINYINT DEFAULT 1 COMMENT '状态：0-隐藏，1-显示',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_order_id (order_id),
+    KEY idx_user_id (user_id),
+    KEY idx_merchant_id (merchant_id),
+    KEY idx_rating (rating),
+    KEY idx_create_time (create_time),
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES resident_users(id) ON DELETE CASCADE,
+    FOREIGN KEY (merchant_id) REFERENCES merchant_accounts(id) ON DELETE CASCADE,
+    FOREIGN KEY (activity_id) REFERENCES marketing_activities(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='订单评价表';
+
+-- ============================================
+-- 八、数据统计表结构
+-- ============================================
+
+-- 8.1 活动统计表
+CREATE TABLE IF NOT EXISTS activity_statistics (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '统计ID',
+    activity_id BIGINT UNSIGNED NOT NULL COMMENT '活动ID',
+    merchant_id BIGINT UNSIGNED NOT NULL COMMENT '商家ID',
+    stat_date DATE NOT NULL COMMENT '统计日期',
+    view_count INT DEFAULT 0 COMMENT '浏览量',
+    like_count INT DEFAULT 0 COMMENT '点赞数',
+    share_count INT DEFAULT 0 COMMENT '分享数',
+    comment_count INT DEFAULT 0 COMMENT '评论数',
+    collection_count INT DEFAULT 0 COMMENT '收藏数',
+    order_count INT DEFAULT 0 COMMENT '订单数',
+    order_amount DECIMAL(10, 2) DEFAULT 0.00 COMMENT '订单金额',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_activity_date (activity_id, stat_date),
+    KEY idx_merchant_id (merchant_id),
+    KEY idx_stat_date (stat_date),
+    FOREIGN KEY (activity_id) REFERENCES marketing_activities(id) ON DELETE CASCADE,
+    FOREIGN KEY (merchant_id) REFERENCES merchant_accounts(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='活动统计表';
+
+-- 8.2 商家统计表
+CREATE TABLE IF NOT EXISTS merchant_statistics (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '统计ID',
+    merchant_id BIGINT UNSIGNED NOT NULL COMMENT '商家ID',
+    stat_date DATE NOT NULL COMMENT '统计日期',
+    activity_count INT DEFAULT 0 COMMENT '发布活动数',
+    view_count INT DEFAULT 0 COMMENT '总浏览量',
+    like_count INT DEFAULT 0 COMMENT '总点赞数',
+    share_count INT DEFAULT 0 COMMENT '总分享数',
+    comment_count INT DEFAULT 0 COMMENT '总评论数',
+    collection_count INT DEFAULT 0 COMMENT '总收藏数',
+    follow_count INT DEFAULT 0 COMMENT '新增关注数',
+    order_count INT DEFAULT 0 COMMENT '订单数',
+    order_amount DECIMAL(10, 2) DEFAULT 0.00 COMMENT '订单金额',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_merchant_date (merchant_id, stat_date),
+    KEY idx_stat_date (stat_date),
+    FOREIGN KEY (merchant_id) REFERENCES merchant_accounts(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='商家统计表';
+
+-- 8.3 用户行为日志表
+CREATE TABLE IF NOT EXISTS user_behavior_logs (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '日志ID',
+    user_id BIGINT UNSIGNED DEFAULT NULL COMMENT '用户ID',
+    user_type TINYINT DEFAULT 1 COMMENT '用户类型：1-居民，2-商家',
+    behavior_type VARCHAR(50) NOT NULL COMMENT '行为类型：view-浏览，like-点赞，share-分享，collect-收藏，order-下单等',
+    target_type VARCHAR(50) DEFAULT NULL COMMENT '目标类型：activity-活动，merchant-商家，order-订单',
+    target_id BIGINT UNSIGNED DEFAULT NULL COMMENT '目标ID',
+    extra_data JSON COMMENT '扩展数据（JSON格式）',
+    ip_address VARCHAR(50) DEFAULT NULL COMMENT 'IP地址',
+    user_agent VARCHAR(500) DEFAULT NULL COMMENT '用户代理',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (id),
+    KEY idx_user_id (user_id),
+    KEY idx_behavior_type (behavior_type),
+    KEY idx_target (target_type, target_id),
+    KEY idx_create_time (create_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户行为日志表';
+
+-- ============================================
+-- 九、系统管理表结构
+-- ============================================
+
+-- 9.1 系统配置表
+CREATE TABLE IF NOT EXISTS system_configs (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '配置ID',
+    config_key VARCHAR(100) NOT NULL COMMENT '配置键',
+    config_value TEXT COMMENT '配置值',
+    config_type VARCHAR(50) DEFAULT 'text' COMMENT '配置类型：text-文本，json-JSON，number-数字，boolean-布尔',
+    description VARCHAR(500) DEFAULT NULL COMMENT '配置描述',
+    is_public TINYINT DEFAULT 0 COMMENT '是否公开：0-否，1-是',
+    status TINYINT DEFAULT 1 COMMENT '状态：0-禁用，1-启用',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_config_key (config_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统配置表';
+
+-- 9.2 操作日志表
+CREATE TABLE IF NOT EXISTS operation_logs (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '日志ID',
+    user_id BIGINT UNSIGNED DEFAULT NULL COMMENT '操作用户ID',
+    user_type TINYINT DEFAULT NULL COMMENT '用户类型：1-居民，2-商家，3-管理员',
+    module VARCHAR(50) NOT NULL COMMENT '模块名称',
+    action VARCHAR(50) NOT NULL COMMENT '操作动作',
+    target_type VARCHAR(50) DEFAULT NULL COMMENT '目标类型',
+    target_id BIGINT UNSIGNED DEFAULT NULL COMMENT '目标ID',
+    content TEXT COMMENT '操作内容',
+    ip_address VARCHAR(50) DEFAULT NULL COMMENT 'IP地址',
+    user_agent VARCHAR(500) DEFAULT NULL COMMENT '用户代理',
+    status TINYINT DEFAULT 1 COMMENT '状态：0-失败，1-成功',
+    error_msg VARCHAR(500) DEFAULT NULL COMMENT '错误信息',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (id),
+    KEY idx_user_id (user_id),
+    KEY idx_module_action (module, action),
+    KEY idx_target (target_type, target_id),
+    KEY idx_create_time (create_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='操作日志表';
+
+-- 9.3 消息通知表
+CREATE TABLE IF NOT EXISTS notifications (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '通知ID',
+    user_id BIGINT UNSIGNED NOT NULL COMMENT '接收用户ID',
+    user_type TINYINT NOT NULL COMMENT '用户类型：1-居民，2-商家',
+    title VARCHAR(200) NOT NULL COMMENT '通知标题',
+    content TEXT NOT NULL COMMENT '通知内容',
+    type VARCHAR(50) NOT NULL COMMENT '通知类型：system-系统，order-订单，activity-活动，comment-评论',
+    target_type

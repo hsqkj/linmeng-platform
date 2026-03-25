@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商圈快讯 - Demo首页</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h1>商圈快讯 - Demo</h1>
+            <p style="text-align: center; margin-bottom: 30px; color: #6b7280;">选择要访问的页面：</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin: 0 auto;">
+                <a href="register.html" class="btn btn-primary">
+                    <i data-lucide="user-plus"></i> 商家注册
+                </a>
+                <a href="post-message.html" class="btn btn-primary">
+                    <i data-lucide="plus"></i> 发布消息
+                </a>
+                <a href="view-messages.html" class="btn btn-primary">
+                    <i data-lucide="mail"></i> 查看消息
+                </a>
+                <a href="statistics.html" class="btn btn-primary">
+                    <i data-lucide="bar-chart-3"></i> 浏览统计
+                </a>
+                <a href="resident-view.html" class="btn btn-primary">
+                    <i data-lucide="users"></i> 居民端浏览
+                </a>
+            </div>
+            
+            <p style="text-align: center; margin-top: 30px; color: #6b7280; font-size: 0.9rem;">
+                提示：建议先从"商家注册"开始，完成注册后即可体验完整功能流程
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // 初始化图标
+        lucide.createIcons();
+    </script>
+</body>
+</html>

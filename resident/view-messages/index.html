@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>邻盟营销助手 - 用户首页</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.544.0/dist/umd/lucide.min.js"></script>
+    <style>
+        .activity-card {
+            transition: all 0.3s ease;
+        }
+        .activity-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+        }
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+        .tag-orange { background-color: #fff7ed; color: #ea580c; }
+        .tag-blue { background-color: #eff6ff; color: #2563eb; }
+        .tag-green { background-color: #f0fdf4; color: #16a34a; }
+        .tag-purple { background-color: #faf5ff; color: #9333ea; }
+        .tag-red { background-color: #fef2f2; color: #dc2626; }
+        .filter-btn {
+            transition: all 0.2s;
+        }
+        .filter-btn.active {
+            background-color: #f97316;
+            color: white;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1f2937;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.show {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white shadow-sm sticky top-0 z-50">
+            <div class="px-4 py-3">
+                <div class="flex items-center justify-between mb-3">
+                    <h1 class="text-xl font-bold text-gray-900">邻盟营销助手</h1>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="showLocationModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                            <i data-lucide="map-pin" class="h-5 w-5 text-gray-600"></i>
+                        </button>
+                        <button onclick="showMerchantSwitch()" class="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium">
+                            切换商家端
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex items-center bg-gray-100 rounded-lg px-3 py-2 mb-3">
+                    <i data-lucide="search" class="h-5 w-5 text-gray-400 mr-2"></i>
+                    <input type="text" id="search-input" placeholder="搜索商家、活动、优惠..." class="bg-transparent flex-1 outline-none text-sm">
+                </div>
+                
+                <div class="flex space-x-2 overflow-x-auto pb-2">
+                    <button class="filter-btn active px-4 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm whitespace-nowrap" data-filter="all">全部</button>
+                    <button class="filter-btn px-4 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm whitespace-nowrap" data-filter="new-store">新店开业</button>
+                    <button class="filter-btn px-4 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm whitespace-nowrap" data-filter="discount">限时折扣</button>
+                    <button class="filter-btn px-4 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm whitespace-nowrap" data-filter="package">套餐优惠</button>
+                    <button class="filter-btn px-4 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm whitespace-nowrap" data-filter="service">上门服务</button>
+                    <button class="filter-btn px-4 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm whitespace-nowrap" data-filter="group-buy">拼团集赞</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-4">
+            <div id="activity-list" class="space-y-4">
+            </div>
+            
+            <div id="loading" class="text-center py-8 hidden">
+                <i data-lucide="loader-2" class="h-8 w-8 text-orange-500 animate-spin mx-auto"></i>
+                <p class="text-gray-500 mt-2">加载中...</p>
+            </div>
+            
+            <div id="empty" class="text-center py-12 hidden">
+                <i data-lucide="inbox" class="h-16 w-16 text-gray-300 mx-auto"></i>
+                <p class="text-gray-500 mt-4">暂无活动信息</p>
+            </div>
+        </div>
+        
+        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2">
+            <div class="flex justify-around max-w-4xl mx-auto">
+                <button class="flex flex-col items-center text-orange-600">
+                    <i data-lucide="home" class="h-6 w-6"></i>
+                    <span class="text-xs mt-1">首页</span>
+                </button>
+                <button onclick="showCollections()" class="flex flex-col items-center text-gray-500 hover:text-orange-600">
+                    <i data-lucide="heart" class="h-6 w-6"></i>
+                    <span class="text-xs mt-1">收藏</span>
+                </button>
+                <button onclick="showOrders()" class="flex flex-col items-center text-gray-500 hover:text-orange-600">
+                    <i data-lucide="shopping-bag" class="h-6 w-6"></i>
+                    <span class="text-xs mt-1">订单</span>
+                </button>
+                <button onclick="showProfile()" class="flex flex-col items-center text-gray-500 hover:text-orange-600">
+                    <i data-lucide="user" class="h-6 w-6"></i>
+                    <span class="text-xs mt-1">我的</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+    
+    <div id="location-modal" class="modal">
+        <div class="bg-white rounded-xl p-6 mx-4 max-w-sm w-full">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">选择社区</h3>
+            <div class="space-y-3">
+                <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-orange-500">
+                    <input type="radio" name="community" value="1" checked class="mr-3">
+                    <div>
+                        <p class="font-medium text-gray-900">幸福社区</p>
+                        <p class="text-sm text-gray-500">朝阳区建国路88号</p>
+                    </div>
+                </label>
+                <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-orange-500">
+                    <input type="radio" name="community" value="2" class="mr-3">
+                    <div>
+                        <p class="font-medium text-gray-900">阳光社区</p>
+                        <p class="text-sm text-gray-500">海淀区中关村大街100号</p>
+                    </div>
+                </label>
+                <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-orange-500">
+                    <input type="radio" name="community" value="3" class="mr-3">
+                    <div>
+                        <p class="font-medium text-gray-900">和谐社区</p>
+                        <p class="text-sm text-gray-500">西城区西单北大街120号</p>
+                    </div>
+                </label>
+            </div>
+            <button onclick="hideLocationModal()" class="w-full mt-4 px-4 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700">
+                确定
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        lucide.createIcons();
+        
+        const activities = [
+            {
+                id: 1,
+                merchantId: 1,
+                merchantName: '鲜果时光',
+                merchantAvatar: 'https://via.placeholder.com/40',
+                industry: '生鲜',
+                title: '【限时折扣】新鲜水果特价促销',
+                content: '🔥 限时折扣活动开始啦！\n\n⏰ 活动时间：即日起至本周末\n💰 特价商品：\n• 苹果 原价12元/斤 特价8元/斤\n• 香蕉 原价6元/斤 特价4元/斤\n• 橙子 原价10元/斤 特价7元/斤\n\n数量有限，先到先得！',
+                templateType: 'discount',
+                coverImage: 'https://via.placeholder.com/400x200',
+                images: ['https://via.placeholder.com/400x200'],
+                tags: ['限时折扣', '生鲜', '特价'],
+                startTime: '2026-03-08',
+                endTime: '2026-03-15',
+                views: 128,
+                likes: 45,
+                comments: 12,
+                shares: 8,
+                distance: '0.5km',
+                status: 'published'
+            },
+            {
+                id: 2,
+                merchantId: 2,
+                merchantName: '美发沙龙',
+                merchantAvatar: 'https://via.placeholder.com/40',
+                industry: '美容',
+                title: '【新店开业】开业大酬宾，全场5折',
+                content: '🎉 好消息！本店新开业啦！\n\n📍 地址：幸福社区商业街\n⏰ 开业时间：2026年3月8日\n🎁 开业福利：\n• 到店即送精美礼品一份\n• 全场消费满200立减100\n• 会员首单享5折优惠\n\n期待您的光临！',
+                templateType: 'new-store',
+                coverImage: 'https://via.placeholder.com/400x200',
+                images: ['https://via.placeholder.com/400x200'],
+                tags: ['新店开业', '美容', '5折'],
+                startTime: '2026-03-08',
+                endTime: '2026-03-31',
+                views: 256,
+                likes: 89,
+                comments: 34,
+                shares: 23,
+                distance: '0.8km',
+                status: 'published'
+            },
+            {
+                id: 3,
+                merchantId: 3,
+                merchantName: '家政服务中心',
+                merchantAvatar: 'https://via.placeholder.com/40',
+                industry: '家政',
+                title: '【上门服务】专业家政，预约有礼',
+                content: '🏠 上门服务，专业便捷\n\n📋 服务项目：家庭保洁、深度清洁、家电清洗\n📍 服务范围：幸福社区及周边3公里\n💰 收费标准：保洁80元/小时起\n⏰ 服务时间：每天8:00-20:00\n📞 预约方式：电话或微信预约\n\n专业团队，品质保证，欢迎预约！',
+                templateType: 'service',
+                coverImage: 'https://via.placeholder.com/400x200',
+                images: ['https://via.placeholder.com/400x200'],
+                tags: ['上门服务', '家政', '预约'],
+                startTime: '2026-03-08',
+                endTime: '2026-12-31',
+                views: 89,
+                likes: 32,
+                comments: 8,
+                shares: 5,
+                distance: '1.2km',
+                status: 'published'
+            },
+            {
+                id: 4,
+                merchantId: 4,
+                merchantName: '亲子乐园',
+                merchantAvatar: 'https://via.placeholder.com/40',
+                industry: '教育',
+                title: '【拼团集赞】亲子体验课，3人成团',
+                content: '🎉 拼团集赞活动！\n\n📦 活动商品：亲子体验课\n💰 拼团价格：原价199元 拼团价99元\n👥 拼团人数：3人成团\n⏰ 活动时间：即日起至3月20日\n🎁 分享福利：集赞20个送精美玩具\n\n快来邀请好友一起拼团吧！',
+                templateType: 'group-buy',
+                coverImage: 'https://via.placeholder.com/400x200',
+                images: ['https://via.placeholder.com/400x200'],
+                tags: ['拼团集赞', '亲子', '教育'],
+                startTime: '2026-03-08',
+                endTime: '2026-03-20',
+                views: 167,
+                likes: 56,
+                comments: 21,
+                shares: 34,
+                distance: '1.5km',
+                status: 'published'
+            },
+            {
+                id: 5,
+                merchantId: 5,
+                merchantName: '便利店',
+                merchantAvatar: 'https://via.placeholder.com/40',
+                industry: '零售',
+                title: '【会员专享】积分兑换好礼',
+                content: '🎊 亲爱的会员朋友：\n\n🎉 本月会员专享福利已上线！\n✅ 会员折扣：全场商品9折\n✅ 积分加倍：消费1元积2分\n✅ 专属礼品：到店即送会员礼品\n✅ 积分兑换：500分可兑换精美礼品\n\n期待您的光临！',
+                templateType: 'member',
+                coverImage: 'https://via.placeholder.com/400x200',
+                images: ['https://via.placeholder.com/400x200'],
+                tags: ['会员专享', '积分兑换', '零售'],
+                startTime: '2026-03-08',
+                endTime: '2026-03-31',
+                views: 203,
+                likes: 78,
+                comments: 15,
+                shares: 12,
+                distance: '0.3km',
+                status: 'published'
+            }
+        ];
+        
+        let currentFilter = 'all';
+        let searchKeyword = '';
+        
+        function init() {
+            loadActivities();
+            setupEventListeners();
+            loadCollections();
+        }
+        
+        function setupEventListeners() {
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.filter;
+                    loadActivities();
+                });
+            });
+            
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('input', (e) => {
+                searchKeyword = e.target.value.toLowerCase();
+                loadActivities();
+            });
+        }
+        
+        function loadActivities() {
+            const activityList = document.getElementById('activity-list');
+            const loading = document.getElementById('loading');
+            const empty = document.getElementById('empty');
+            
+            loading.classList.remove('hidden');
+            empty.classList.add('hidden');
+            activityList.innerHTML = '';
+            
+            setTimeout(() => {
+                loading.classList.add('hidden');
+                
+                let filteredActivities = activities.filter(activity => {
+                    const matchFilter = currentFilter === 'all' || activity.templateType === currentFilter;
+                    const matchSearch = !searchKeyword || 
+                        activity.title.toLowerCase().includes(searchKeyword) ||
+                        activity.merchantName.toLowerCase().includes(searchKeyword) ||
+                        activity.content.toLowerCase().includes(searchKeyword);
+                    return matchFilter && matchSearch;
+                });
+                
+                if (filteredActivities.length === 0) {
+                    empty.classList.remove('hidden');
+                    return;
+                }
+                
+                filteredActivities.forEach(activity => {
+                    const card = createActivityCard(activity);
+                    activityList.appendChild(card);
+                });
+                
+                lucide.createIcons();
+            }, 500);
+        }
+        
+        function createActivityCard(activity) {
+            const card = document.createElement('div');
+            card.className = 'activity-card bg-white rounded-xl shadow-sm overflow-hidden';
+            card.onclick = () => showActivityDetail(activity.id);
+            
+            const tagsHtml = activity.tags.map(tag => {
+                const tagClass = getTagClass(tag);
+                return `<span class="tag ${tagClass}">${tag}</span>`;
+            }).join('');
+            
+            card.innerHTML = `
+                <div class="relative">
+                    <img src="${activity.coverImage}" alt="${activity.title}" class="w-full h-48 object-cover">
+                    <div class="absolute top-3 right-3 bg-white bg-opacity-90 px-2 py-1 rounded-full text-xs text-gray-600">
+                        <i data-lucide="map-pin" class="h-3 w-3 inline mr-1"></i>
+                        ${activity.distance}
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="flex items-center mb-3">
+                        <img src="${activity.merchantAvatar}" alt="${activity.merchantName}" class="w-8 h-8 rounded-full mr-2">
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-900 text-sm">${activity.merchantName}</p>
+                            <p class="text-xs text-gray-500">${activity.industry}</p>
+                        </div>
+                        <button onclick="event.stopPropagation(); toggleCollection(${activity.id})" class="p-2 hover:bg-gray-100 rounded-full">
+                            <i data-lucide="heart" class="h-5 w-5 text-gray-400" id="collect-icon-${activity.id}"></i>
+                        </button>
+                    </div>
+                    
+                    <h3 class="font-bold text-gray-900 mb-2 line-clamp-2">${activity.title}</h3>
+                    <p class="text-sm text-gray-600 mb-3 line-clamp-2">${activity.content.substring(0, 100)}...</p>
+                    
+                    <div class="mb-3">
+                        ${tagsHtml}
+                    </div>
+                    
+                    <div class="flex items-center justify-between text-xs text-gray-500">
+                        <div class="flex items-center space-x-4">
+                            <span><i data-lucide="eye" class="h-4 w-4 inline mr-1"></i>${activity.views}</span>
+                            <span><i data-lucide="heart" class="h-4 w-4 inline mr-1"></i>${activity.likes}</span>
+                            <span><i data-lucide="message-circle" class="h-4 w-4 inline mr-1"></i>${activity.comments}</span>
+                        </div>
+                        <span>${activity.startTime}</span>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        function getTagClass(tag) {
+            const tagClasses = {
+                '限时折扣': 'tag-orange',
+                '新店开业': 'tag-blue',
+                '上门服务': 'tag-green',
+                '拼团集赞': 'tag-purple',
+                '会员专享': 'tag-red',
+                '生鲜': 'tag-orange',
+                '美容': 'tag-purple',
+                '家政': 'tag-green',
+                '亲子': 'tag-blue',
+                '零售': 'tag-red',
+                '特价': 'tag-orange',
+                '5折': 'tag-orange',
+                '预约': 'tag-green',
+                '教育': 'tag-blue',
+                '积分兑换': 'tag-red'
+            };
+            return tagClasses[tag] || 'tag-blue';
+        }
+        
+        function showActivityDetail(activityId) {
+            const activity = activities.find(a => a.id === activityId);
+            if (!activity) return;
+            
+            localStorage.setItem('currentActivity', JSON.stringify(activity));
+            window.location.href = 'detail.html';
+        }
+        
+        function toggleCollection(activityId) {
+            const collections = JSON.parse(localStorage.getItem('collections') || '[]');
+            const index = collections.indexOf(activityId);
+            
+            if (index > -1) {
+                collections.splice(index, 1);
+                showToast('已取消收藏');
+            } else {
+                collections.push(activityId);
+                showToast('已收藏');
+            }
+            
+            localStorage.setItem('collections', JSON.stringify(collections));
+            updateCollectionIcon(activityId);
+        }
+        
+        function updateCollectionIcon(activityId) {
+            const collections = JSON.parse(localStorage.getItem('collections') || '[]');
+            const icon = document.getElementById(`collect-icon-${activityId}`);
+            if (icon) {
+                if (collections.includes(activityId)) {
+                    icon.classList.remove('text-gray-400');
+                    icon.classList.add('text-red-500');
+                } else {
+                    icon.classList.remove('text-red-500');
+                    icon.classList.add('text-gray-400');
+                }
+            }
+        }
+        
+        function loadCollections() {
+            const collections = JSON.parse(localStorage.getItem('collections') || '[]');
+            collections.forEach(activityId => {
+                updateCollectionIcon(activityId);
+            });
+        }
+        
+        function showLocationModal() {
+            document.getElementById('location-modal').classList.add('show');
+        }
+        
+        function hideLocationModal() {
+            document.getElementById('location-modal').classList.remove('show');
+        }
+        
+        function showMerchantSwitch() {
+            showToast('正在切换到商家端...');
+            setTimeout(() => {
+                window.location.href = '../merchant/post-message/index.html';
+            }, 1000);
+        }
+        
+        function showCollections() {
+            showToast('收藏页面开发中');
+        }
+        
+        function showOrders() {
+            showToast('订单页面开发中');
+        }
+        
+        function showProfile() {
+            showToast('个人中心开发中');
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

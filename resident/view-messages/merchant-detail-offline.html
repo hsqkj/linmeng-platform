@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商家详情 - 邻盟营销助手</title>
+    <link rel="stylesheet" href="../../css/output.css">
+    <style>
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1f2937;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        
+        .icon {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .icon-sm {
+            width: 16px;
+            height: 16px;
+        }
+        .icon-lg {
+            width: 32px;
+            height: 32px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white sticky top-0 z-50 shadow-sm">
+            <div class="px-4 py-3">
+                <div class="flex items-center justify-between">
+                    <button onclick="window.history.back()" class="p-2 hover:bg-gray-100 rounded-lg">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    </button>
+                    <h1 class="text-lg font-bold text-gray-900">商家详情</h1>
+                    <button onclick="toggleFollow()" class="p-2 hover:bg-gray-100 rounded-lg">
+                        <svg class="icon" id="follow-icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="merchant-detail" class="p-4 pb-24">
+        </div>
+        
+        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
+            <div class="flex space-x-3 max-w-4xl mx-auto">
+                <button onclick="callMerchant()" class="flex-1 px-4 py-3 bg-orange-100 text-orange-700 rounded-lg font-medium hover:bg-orange-200 transition-colors">
+                    <svg class="icon inline" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    电话咨询
+                </button>
+                <button onclick="showConsultModal()" class="flex-1 px-4 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors">
+                    <svg class="icon inline" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                    在线咨询
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+    
+    <div id="consult-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-sm w-full">
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">在线咨询</h3>
+                    <button onclick="hideConsultModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="mb-4">
+                    <div class="flex items-center mb-3">
+                        <img id="consult-merchant-avatar" src="" alt="" class="w-10 h-10 rounded-full mr-3">
+                        <div>
+                            <p id="consult-merchant-name" class="font-medium text-gray-900"></p>
+                            <p class="text-sm text-gray-500">商家将在24小时内回复</p>
+                        </div>
+                    </div>
+                    <textarea id="consult-content" rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="请输入您想咨询的问题..."></textarea>
+                </div>
+                <button onclick="submitConsult()" class="w-full px-4 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700">
+                    发送咨询
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let merchant = null;
+        let isFollowed = false;
+        
+        const merchants = [
+            {
+                id: 1,
+                name: '鲜果时光',
+                avatar: 'https://via.placeholder.com/100/ff9716/ffffff?text=鲜',
+                coverImage: 'https://via.placeholder.com/800x400/ff9716/ffffff?text=鲜果时光',
+                industry: '生鲜',
+                address: '幸福社区底商A栋101',
+                phone: '13800138000',
+                businessHours: '08:00-22:00',
+                distance: '500m',
+                rating: 4.8,
+                reviewCount: 256,
+                description: '鲜果时光是一家专注于社区生鲜配送的优质商家，提供新鲜水果、蔬菜、肉类等生鲜产品。我们承诺：新鲜、健康、实惠！',
+                tags: ['生鲜配送', '水果', '蔬菜', '肉类', '新鲜', '实惠'],
+                services: ['配送上门', '到店自提', '会员优惠', '积分兑换'],
+                images: [
+                    'https://via.placeholder.com/400x300/ff9716/ffffff?text=店铺1',
+                    'https://via.placeholder.com/400x300/ff9716/ffffff?text=店铺2',
+                    'https://via.placeholder.com/400x300/ff9716/ffffff?text=店铺3'
+                ]
+            },
+            {
+                id: 2,
+                name: '好帮手家政',
+                avatar: 'https://via.placeholder.com/100/8b5cf6/ffffff?text=家',
+                coverImage: 'https://via.placeholder.com/800x400/8b5cf6/ffffff?text=好帮手家政',
+                industry: '家政',
+                address: '幸福社区底商B栋201',
+                phone: '13800138001',
+                businessHours: '08:00-20:00',
+                distance: '800m',
+                rating: 4.9,
+                reviewCount: 189,
+                description: '好帮手家政提供专业的家政服务，包括家庭保洁、家电清洗、月嫂服务等。专业团队，品质保证！',
+                tags: ['家政服务', '保洁', '清洗', '月嫂', '专业', '可靠'],
+                services: ['家庭保洁', '家电清洗', '月嫂服务', '钟点工'],
+                images: [
+                    'https://via.placeholder.com/400x300/8b5cf6/ffffff?text=店铺1',
+                    'https://via.placeholder.com/400x300/8b5cf6/ffffff?text=店铺2',
+                    'https://via.placeholder.com/400x300/8b5cf6/ffffff?text=店铺3'
+                ]
+            },
+            {
+                id: 3,
+                name: '美丽人生美容',
+                avatar: 'https://via.placeholder.com/100/ec4899/ffffff?text=美',
+                coverImage: 'https://via.placeholder.com/800x400/ec4899/ffffff?text=美丽人生美容',
+                industry: '美容',
+                address: '幸福社区底商C栋301',
+                phone: '13800138002',
+                businessHours: '10:00-21:00',
+                distance: '1.2km',
+                rating: 4.7,
+                reviewCount: 167,
+                description: '美丽人生美容提供专业的美容护理服务，包括面部护理、身体护理、美甲美睫等。让您焕发美丽光彩！',
+                tags: ['美容护理', '面部护理', '身体护理', '美甲', '美睫', '专业'],
+                services: ['面部护理', '身体护理', '美甲美睫', '美容套餐'],
+                images: [
+                    'https://via.placeholder.com/400x300/ec4899/ffffff?text=店铺1',
+                    'https://via.placeholder.com/400x300/ec4899/ffffff?text=店铺2',
+                    'https://via.placeholder.com/400x300/ec4899/ffffff?text=店铺3'
+                ]
+            },
+            {
+                id: 4,
+                name: '书香阁书店',
+                avatar: 'https://via.placeholder.com/100/6366f1/ffffff?text=书',
+                coverImage: 'https://via.placeholder.com/800x400/6366f1/ffffff?text=书香阁书店',
+                industry: '零售',
+                address: '幸福社区底商D栋401',
+                phone: '13800138003',
+                businessHours: '09:00-21:00',
+                distance: '600m',
+                rating: 4.6,
+                reviewCount: 134,
+                description: '书香阁书店是一家温馨的社区书店，提供各类图书、文具、文创产品。让阅读成为生活的一部分！',
+                tags: ['书店', '图书', '文具', '文创', '阅读', '温馨'],
+                services: ['图书销售', '文具销售', '文创产品', '会员服务'],
+                images: [
+                    'https://via.placeholder.com/400x300/6366f1/ffffff?text=店铺1',
+                    'https://via.placeholder.com/400x300/6366f1/ffffff?text=店铺2',
+                    'https://via.placeholder.com/400x300/6366f1/ffffff?text=店铺3'
+                ]
+            }
+        ];
+        
+        function init() {
+            // 优先从 localStorage 获取当前登录的商家信息
+            const currentMerchantStr = localStorage.getItem('current_merchant');
+            
+            if (currentMerchantStr) {
+                // 使用当前登录商家的真实信息
+                merchant = JSON.parse(currentMerchantStr);
+                // 补充一些默认字段
+                merchant = enrichMerchantData(merchant);
+            } else {
+                // 如果没有登录，从 URL 获取商家ID（用于居民端查看）
+                const merchantId = getMerchantIdFromUrl();
+                merchant = merchants.find(m => m.id === merchantId);
+            }
+            
+            if (!merchant) {
+                showToast('商家信息不存在');
+                window.history.back();
+                return;
+            }
+            
+            loadMerchantDetail();
+            loadFollowStatus();
+        }
+        
+        function getMerchantIdFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return parseInt(urlParams.get('id')) || parseInt(urlParams.get('merchantId')) || 1;
+        }
+        
+        // 补充商家数据，添加默认值
+        function enrichMerchantData(merchant) {
+            return {
+                ...merchant,
+                coverImage: merchant.coverImage || merchant.logo || merchant.avatar || 'https://via.placeholder.com/800x400/ff9716/ffffff?text=' + encodeURIComponent(merchant.name || '商家'),
+                avatar: merchant.avatar || merchant.logo || 'https://via.placeholder.com/100/ff9716/ffffff?text=' + encodeURIComponent((merchant.name || '商').charAt(0)),
+                rating: merchant.rating || 5.0,
+                reviewCount: merchant.reviewCount || 0,
+                distance: merchant.distance || '0m',
+                description: merchant.description || '优质商家，服务社区',
+                tags: merchant.tags || [merchant.industry || '零售'],
+                services: merchant.services || ['优质服务', '诚信经营'],
+                images: merchant.images || [merchant.logo || merchant.avatar || 'https://via.placeholder.com/400x300/ff9716/ffffff?text=店铺'],
+                phone: merchant.phone || '暂无电话'
+            };
+        }
+        
+        function loadMerchantDetail() {
+            const container = document.getElementById('merchant-detail');
+            
+            const tagsHtml = merchant.tags.map(tag => {
+                return `<span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">${tag}</span>`;
+            }).join('');
+            
+            const servicesHtml = merchant.services.map(service => {
+                return `
+                    <div class="flex items-center mb-2">
+                        <svg class="icon-sm text-orange-600 mr-2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                        <span class="text-sm text-gray-700">${service}</span>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = `
+                ${merchant.coverImage ? `<img src="${merchant.coverImage}" alt="${merchant.name}" class="w-full h-48 object-cover rounded-xl mb-4">` : ''}
+                
+                <div class="bg-white rounded-xl shadow-sm p-4 mb-4">
+                    <div class="flex items-start mb-3">
+                        <img src="${merchant.avatar}" alt="${merchant.name}" class="w-16 h-16 rounded-full mr-4 object-contain bg-gray-50 border border-gray-100">
+                        <div class="flex-1">
+                            <h1 class="text-xl font-bold text-gray-900 mb-1">${merchant.name}</h1>
+                            <p class="text-sm text-gray-500 mb-2">${merchant.industry || '零售'}</p>
+                            ${merchant.rating ? `
+                            <div class="flex items-center space-x-4">
+                                <div class="flex items-center">
+                                    <svg class="icon-sm text-yellow-500 mr-1" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                    <span class="text-sm font-medium text-gray-900">${merchant.rating}</span>
+                                </div>
+                                <span class="text-sm text-gray-500">${merchant.reviewCount}条评价</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        ${tagsHtml}
+                    </div>
+                    
+                    ${merchant.description ? `<p class="text-sm text-gray-700 leading-relaxed">${merchant.description}</p>` : ''}
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm p-4 mb-4">
+                    <h2 class="text-lg font-bold text-gray-900 mb-3">商家信息</h2>
+                    <div class="space-y-3">
+                        <div class="flex items-start">
+                            <svg class="icon text-gray-400 mr-3 mt-0.5" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-0.5">详细地址</p>
+                                <p class="text-sm text-gray-700">${merchant.address || '暂无地址'}</p>
+                            </div>
+                        </div>
+                        ${merchant.community ? `
+                        <div class="flex items-start">
+                            <svg class="icon text-gray-400 mr-3 mt-0.5" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-0.5">所在社区</p>
+                                <p class="text-sm text-gray-700">${merchant.community}</p>
+                            </div>
+                        </div>
+                        ` : ''}
+                        <div class="flex items-center">
+                            <svg class="icon text-gray-400 mr-3" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-0.5">联系电话</p>
+                                <p class="text-sm text-gray-700">${merchant.phone}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <svg class="icon text-gray-400 mr-3" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-0.5">营业时间</p>
+                                <p class="text-sm text-gray-700">${merchant.businessHours || '09:00-21:00'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm p-4 mb-4">
+                    <h2 class="text-lg font-bold text-gray-900 mb-3">服务项目</h2>
+                    <div class="grid grid-cols-2 gap-3">
+                        ${servicesHtml}
+                    </div>
+                </div>
+                
+                ${merchant.logo || merchant.avatar ? `
+                <div class="bg-white rounded-xl shadow-sm p-4 mb-4">
+                    <h2 class="text-lg font-bold text-gray-900 mb-3">店铺照片</h2>
+                    <div class="grid grid-cols-2 gap-3">
+                        ${merchant.logo ? `<div class="relative"><img src="${merchant.logo}" alt="${merchant.name}" class="w-full h-40 object-contain rounded-lg border border-gray-100 bg-gray-50"><span class="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">门头照片/Logo</span></div>` : ''}
+                        ${merchant.avatar && merchant.avatar !== merchant.logo ? `<div class="relative"><img src="${merchant.avatar}" alt="${merchant.name}" class="w-full h-40 object-contain rounded-lg border border-gray-100 bg-gray-50"><span class="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">商家头像</span></div>` : ''}
+                    </div>
+                </div>
+                ` : ''}
+                
+                <div class="bg-white rounded-xl shadow-sm p-4">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4">用户评价</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="w-10 h-10 bg-gray-300 rounded-full mr-3 flex items-center justify-center text-gray-600">张</div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between mb-1">
+                                    <p class="font-medium text-gray-900 text-sm">张三</p>
+                                    <div class="flex items-center">
+                                        <svg class="icon-sm text-yellow-500 mr-1" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        <span class="text-xs text-gray-500">5.0</span>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-700 mb-1">服务很好，态度很棒！</p>
+                                <span class="text-xs text-gray-400">2小时前</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="w-10 h-10 bg-gray-300 rounded-full mr-3 flex items-center justify-center text-gray-600">李</div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between mb-1">
+                                    <p class="font-medium text-gray-900 text-sm">李四</p>
+                                    <div class="flex items-center">
+                                        <svg class="icon-sm text-yellow-500 mr-1" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        <span class="text-xs text-gray-500">4.8</span>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-700 mb-1">性价比很高，推荐！</p>
+                                <span class="text-xs text-gray-400">5小时前</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function loadFollowStatus() {
+            const followedMerchants = JSON.parse(localStorage.getItem('followedMerchants') || '[]');
+            isFollowed = followedMerchants.includes(merchant.id);
+            updateFollowIcon();
+        }
+        
+        function toggleFollow() {
+            const followedMerchants = JSON.parse(localStorage.getItem('followedMerchants') || '[]');
+            const index = followedMerchants.indexOf(merchant.id);
+            
+            if (index > -1) {
+                followedMerchants.splice(index, 1);
+                isFollowed = false;
+                showToast('已取消关注');
+            } else {
+                followedMerchants.push(merchant.id);
+                isFollowed = true;
+                showToast('已关注商家');
+            }
+            
+            localStorage.setItem('followedMerchants', JSON.stringify(followedMerchants));
+            updateFollowIcon();
+        }
+        
+        function updateFollowIcon() {
+            const icon = document.getElementById('follow-icon');
+            if (icon) {
+                if (isFollowed) {
+                    icon.classList.add('text-red-500');
+                } else {
+                    icon.classList.remove('text-red-500');
+                }
+            }
+        }
+        
+        function callMerchant() {
+            window.location.href = `tel:${merchant.phone}`;
+        }
+        
+        function showConsultModal() {
+            document.getElementById('consult-merchant-avatar').src = merchant.avatar;
+            document.getElementById('consult-merchant-name').textContent = merchant.name;
+            document.getElementById('consult-modal').classList.remove('hidden');
+        }
+        
+        function hideConsultModal() {
+            document.getElementById('consult-modal').classList.add('hidden');
+            document.getElementById('consult-content').value = '';
+        }
+        
+        function submitConsult() {
+            const content = document.getElementById('consult-content').value.trim();
+            if (!content) {
+                showToast('请输入咨询内容');
+                return;
+            }
+            
+            showToast('咨询已发送，商家将尽快回复');
+            hideConsultModal();
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

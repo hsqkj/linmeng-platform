@@ -403,53 +403,56 @@ onMounted(() => {
 <style scoped>
 .home-page {
   padding-bottom: 60px;
-  background: #f5f5f5;
+  background: var(--bg-page);
 }
 
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .auth-buttons {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .banner {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
-  margin: 12px;
-  border-radius: 12px;
+  background: var(--primary-gradient);
+  padding: var(--spacing-lg);
+  margin: var(--spacing-md);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-card);
 }
 
 .banner-text {
   color: #fff;
-  font-size: 16px;
+  font-size: var(--font-size-large);
   text-align: center;
+  line-height: var(--line-height-large);
 }
 
 .member-card {
   background: linear-gradient(135deg, #f5af19 0%, #f12711 100%);
-  margin: 12px;
-  padding: 16px;
-  border-radius: 12px;
+  margin: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
   color: #fff;
+  box-shadow: var(--shadow-card);
 }
 
 .member-info {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
 }
 
 .member-level {
   background: rgba(255, 255, 255, 0.3);
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--border-radius-round);
+  font-size: var(--font-size-small);
 }
 
 .member-name {
@@ -458,35 +461,38 @@ onMounted(() => {
 }
 
 .member-quota {
-  font-size: 14px;
-  margin-bottom: 12px;
+  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-md);
   opacity: 0.9;
 }
 
 .section {
-  margin-top: 16px;
+  margin-top: var(--spacing-md);
 }
 
 .section-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px;
-  background: #fff;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--bg-white);
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+  margin: 0 var(--spacing-md);
 }
 
 .section-title {
-  font-size: 16px;
-  font-weight: 500;
-  color: #333;
+  font-size: var(--font-size-large);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .demand-stats,
 .sponsor-stats {
-  margin: 12px;
-  padding: 16px;
-  background: #fff;
-  border-radius: 8px;
+  margin: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--bg-white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-card);
 }
 
 .stats-row {
@@ -501,31 +507,39 @@ onMounted(() => {
 }
 
 .stat-value {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: bold;
-  color: #323233;
+  color: var(--text-primary);
 }
 
 .stat-label {
-  font-size: 12px;
-  color: #666;
-  margin-top: 4px;
+  font-size: var(--font-size-small);
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
 }
 
 .demand-list-section,
 .sponsor-list-section {
-  margin: 12px;
+  margin: var(--spacing-md);
 }
 
 .quick-actions {
-  padding: 12px;
+  padding: var(--spacing-md);
   text-align: center;
+  background: var(--bg-white);
+  margin: 0 var(--spacing-md);
 }
 
 .demand-item,
 .sponsor-item {
-  padding: 12px;
-  border-bottom: 1px solid #f5f5f5;
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-lighter);
+  transition: var(--transition-base);
+}
+
+.demand-item:hover,
+.sponsor-item:hover {
+  background: var(--bg-hover);
 }
 
 .demand-item:last-child,
@@ -538,14 +552,14 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-sm);
 }
 
 .demand-title,
 .sponsor-title {
   font-size: 15px;
-  font-weight: 500;
-  color: #323233;
+  font-weight: 600;
+  color: var(--text-primary);
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -557,16 +571,16 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12px;
-  color: #969799;
-  margin-bottom: 8px;
+  font-size: var(--font-size-small);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
 }
 
 .demand-info span,
 .sponsor-info span {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--spacing-xs);
 }
 
 .match-hearts {
@@ -576,20 +590,20 @@ onMounted(() => {
 }
 
 .match-label {
-  font-size: 12px;
-  color: #969799;
-  margin-right: 4px;
+  font-size: var(--font-size-small);
+  color: var(--text-secondary);
+  margin-right: var(--spacing-xs);
 }
 
 .community-name {
-  font-size: 12px;
-  color: #969799;
+  font-size: var(--font-size-small);
+  color: var(--text-secondary);
 }
 
 .demand-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--spacing-xs);
 }
 
 .popup-content {
@@ -602,13 +616,15 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-lighter);
 }
 
 .popup-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--font-size-large);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .popup-body {
@@ -619,23 +635,23 @@ onMounted(() => {
 
 .community-card {
   display: flex;
-  gap: 16px;
-  padding: 16px;
-  background: #f8f8f8;
-  margin: 12px;
-  border-radius: 8px;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--bg-page);
+  margin: var(--spacing-md);
+  border-radius: var(--border-radius-lg);
 }
 
 .community-info-card .name {
-  font-size: 16px;
-  font-weight: 500;
-  color: #333;
+  font-size: var(--font-size-large);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .community-info-card .address {
-  font-size: 13px;
-  color: #666;
-  margin-top: 4px;
+  font-size: var(--font-size-base);
+  color: var(--text-regular);
+  margin-top: var(--spacing-xs);
 }
 
 .popup-footer {
@@ -643,19 +659,19 @@ onMounted(() => {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 12px 16px;
-  background: #fff;
-  border-top: 1px solid #f0f0f0;
+  padding: var(--spacing-md);
+  background: var(--bg-white);
+  border-top: 1px solid var(--border-lighter);
 }
 
 .login-tip {
   text-align: center;
-  padding: 40px 20px;
-  color: #999;
+  padding: 40px var(--spacing-lg);
+  color: var(--text-secondary);
 }
 
 .login-tip p {
-  margin: 16px 0;
-  font-size: 14px;
+  margin: var(--spacing-md) 0;
+  font-size: var(--font-size-base);
 }
 </style>

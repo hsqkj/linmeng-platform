@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商圈快讯 - 浏览统计</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.544.0/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <style>
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 to-purple-50 min-h-screen">
+    <div class="max-w-6xl mx-auto p-4">
+        <!-- 顶部导航 -->
+        <div class="sticky top-0 z-10 bg-white rounded-xl shadow-md p-4 mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <h1 class="text-2xl font-bold text-gray-900 mb-4 md:mb-0">数据统计分析</h1>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <select class="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-10 text-sm font-medium text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option>最近7天</option>
+                            <option>最近30天</option>
+                            <option>最近90天</option>
+                            <option>自定义</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                            <i data-lucide="chevron-down" class="h-4 w-4 text-gray-400"></i>
+                        </div>
+                    </div>
+                    <button class="flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg shadow-sm hover:bg-indigo-700 transition-colors">
+                        <i data-lucide="download" class="h-4 w-4 mr-2"></i>
+                        导出数据
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 关键指标卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+            <div class="stat-card bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-600">总浏览量</h3>
+                        <p class="text-2xl font-bold text-indigo-600">12,345</p>
+                        <p class="text-xs text-green-500 mt-1"><i data-lucide="trending-up" class="h-3 w-3 inline mr-1"></i> 15.2% 较上周</p>
+                    </div>
+                    <div class="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <i data-lucide="eye" class="h-6 w-6 text-indigo-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-600">总留言数</h3>
+                        <p class="text-2xl font-bold text-green-600">567</p>
+                        <p class="text-xs text-green-500 mt-1"><i data-lucide="trending-up" class="h-3 w-3 inline mr-1"></i> 8.7% 较上周</p>
+                    </div>
+                    <div class="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                        <i data-lucide="message-circle" class="h-6 w-6 text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-600">总分享数</h3>
+                        <p class="text-2xl font-bold text-yellow-600">890</p>
+                        <p class="text-xs text-red-500 mt-1"><i data-lucide="trending-down" class="h-3 w-3 inline mr-1"></i> 2.3% 较上周</p>
+                    </div>
+                    <div class="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center">
+                        <i data-lucide="share-2" class="h-6 w-6 text-yellow-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-600">转化率</h3>
+                        <p class="text-2xl font-bold text-red-600">12.5%</p>
+                        <p class="text-xs text-green-500 mt-1"><i data-lucide="trending-up" class="h-3 w-3 inline mr-1"></i> 3.1% 较上周</p>
+                    </div>
+                    <div class="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
+                        <i data-lucide="bar-chart-3" class="h-6 w-6 text-red-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-600">平均停留时间</h3>
+                        <p class="text-2xl font-bold text-purple-600">2m 35s</p>
+                        <p class="text-xs text-green-500 mt-1"><i data-lucide="trending-up" class="h-3 w-3 inline mr-1"></i> 12.4% 较上周</p>
+                    </div>
+                    <div class="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
+                        <i data-lucide="clock" class="h-6 w-6 text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-600">新增访客数</h3>
+                        <p class="text-2xl font-bold text-blue-600">2,134</p>
+                        <p class="text-xs text-red-500 mt-1"><i data-lucide="trending-down" class="h-3 w-3 inline mr-1"></i> 5.7% 较上周</p>
+                    </div>
+                    <div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                        <i data-lucide="users" class="h-6 w-6 text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 图表区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <!-- 浏览趋势图表 -->
+            <div class="bg-white rounded-xl shadow-md p-6 lg:col-span-2">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">浏览量趋势分析</h3>
+                    <div class="flex items-center space-x-2">
+                        <button class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">日</button>
+                        <button class="px-3 py-1 text-xs font-medium text-indigo-600 bg-indigo-100 rounded-full">周</button>
+                        <button class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">月</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- 访客性别分布 -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">访客性别分布</h3>
+                <div class="chart-container">
+                    <canvas id="genderChart"></canvas>
+                </div>
+                <div class="mt-4 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="h-3 w-3 rounded-full bg-indigo-500 mr-2"></div>
+                            <span class="text-sm text-gray-600">男性</span>
+                        </div>
+                        <span class="text-sm font-medium text-gray-900">58%</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="h-3 w-3 rounded-full bg-pink-500 mr-2"></div>
+                            <span class="text-sm text-gray-600">女性</span>
+                        </div>
+                        <span class="text-sm font-medium text-gray-900">42%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 底部图表区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- 浏览高峰时段 -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">浏览高峰时段</h3>
+                <div class="chart-container">
+                    <canvas id="hourlyChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- 内容分类占比 -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">内容分类占比</h3>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        lucide.createIcons();
+        
+        // 浏览量趋势分析图表
+        const trendChart = new Chart(document.getElementById('trendChart'), {
+            type: 'line',
+            data: {
+                labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                datasets: [{
+                    label: '浏览量',
+                    data: [120, 190, 300, 500, 200, 300, 450],
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1,
+                    fill: true,
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 访客性别分布图表
+        const genderChart = new Chart(document.getElementById('genderChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['男性', '女性'],
+                datasets: [{
+                    data: [58, 42],
+                    backgroundColor: ['rgb(75, 192, 192)', 'rgb(255, 99, 132)'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        // 浏览高峰时段图表
+        const hourlyChart = new Chart(document.getElementById('hourlyChart'), {
+            type: 'bar',
+            data: {
+                labels: ['0点', '2点', '4点', '6点', '8点', '10点', '12点', '14点', '16点', '18点', '20点', '22点'],
+                datasets: [{
+                    label: '浏览量',
+                    data: [50, 30, 20, 80, 200, 350, 420, 380, 450, 520, 400, 150],
+                    backgroundColor: 'rgba(139, 92, 246, 0.6)',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 内容分类占比图表
+        const categoryChart = new Chart(document.getElementById('categoryChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['促销活动', '新品上市', '会员专享', '品牌故事', '其他'],
+                datasets: [{
+                    data: [35, 25, 20, 15, 5],
+                    backgroundColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(54, 162, 235)',
+                        'rgb(255, 205, 86)',
+                        'rgb(75, 192, 192)',
+                        'rgb(153, 102, 255)'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            boxWidth: 12
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 日期范围选择功能
+        const dateRangeSelect = document.querySelector('select');
+        dateRangeSelect.addEventListener('change', function() {
+            const selectedRange = this.value;
+            console.log('选择了日期范围:', selectedRange);
+            // 这里可以添加切换图表数据的逻辑
+        });
+        
+        // 导出数据功能
+        const exportBtn = document.querySelector('button');
+        exportBtn.addEventListener('click', function() {
+            console.log('导出数据');
+            // 这里可以添加导出数据的逻辑
+        });
+    </script>
+</body>
+</html>

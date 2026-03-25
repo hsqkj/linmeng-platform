@@ -1,0 +1,16 @@
+{
+  "pages": [
+    "pages/merchant/register/index",
+    "pages/merchant/post-message/index",
+    "pages/merchant/view-messages/index",
+    "pages/merchant/statistics/index",
+    "pages/resident/view-messages/index"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#4f46e5",
+    "navigationBarTitleText": "商圈快讯",
+    "navigationBarTextStyle": "white"
+  },
+  "sitemapLocation": "sitemap.json"
+}

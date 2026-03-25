@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>草稿箱 - 邻盟营销助手</title>
+    <link rel="stylesheet" href="../../css/output.css">
+    <style>
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1f2937;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .draft-card {
+            transition: all 0.2s;
+        }
+        .draft-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .icon {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .icon-sm {
+            width: 16px;
+            height: 16px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white sticky top-0 z-50 shadow-sm">
+            <div class="px-4 py-3">
+                <div class="flex items-center justify-between">
+                    <button onclick="window.history.back()" class="p-2 hover:bg-gray-100 rounded-lg">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    </button>
+                    <h1 class="text-lg font-bold text-gray-900">草稿箱</h1>
+                    <button onclick="createNewDraft()" class="px-3 py-1.5 bg-orange-600 text-white rounded-lg text-sm font-medium">
+                        新建
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-4">
+            <div id="draft-list" class="space-y-4">
+            </div>
+            
+            <div id="loading" class="hidden text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+                <p class="text-gray-500 mt-2">加载中...</p>
+            </div>
+            
+            <div id="empty" class="hidden text-center py-12">
+                <svg class="icon-lg text-gray-400 mx-auto mb-4" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                <p class="text-gray-500">暂无草稿</p>
+                <button onclick="createNewDraft()" class="mt-4 px-6 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700">
+                    创建草稿
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+    
+    <div id="draft-detail-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">草稿详情</h3>
+                    <button onclick="hideDraftDetail()" class="p-2 hover:bg-gray-100 rounded-lg">
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div id="draft-detail-content" class="p-4">
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentDraft = null;
+        
+        const templateNames = {
+            'new-store': '新店开业',
+            'discount': '限时折扣',
+            'package': '套餐优惠',
+            'notification': '活动通知',
+            'service': '上门服务',
+            'group-buy': '拼团集赞',
+            'festival': '节日特惠',
+            'member': '会员专享',
+            'clearance': '尾货清仓',
+            'custom': '自定义'
+        };
+        
+        function init() {
+            loadDrafts();
+        }
+        
+        function loadDrafts() {
+            const draftList = document.getElementById('draft-list');
+            const loading = document.getElementById('loading');
+            const empty = document.getElementById('empty');
+            
+            draftList.innerHTML = '';
+            loading.classList.remove('hidden');
+            empty.classList.add('hidden');
+            
+            setTimeout(() => {
+                loading.classList.add('hidden');
+                
+                const drafts = JSON.parse(localStorage.getItem('drafts') || '[]');
+                
+                if (drafts.length === 0) {
+                    empty.classList.remove('hidden');
+                    return;
+                }
+                
+                drafts.forEach(draft => {
+                    const card = createDraftCard(draft);
+                    draftList.appendChild(card);
+                });
+            }, 500);
+        }
+        
+        function createDraftCard(draft) {
+            const card = document.createElement('div');
+            card.className = 'draft-card bg-white rounded-xl shadow-sm p-4 cursor-pointer';
+            card.onclick = () => showDraftDetail(draft);
+            
+            const saveTime = new Date(draft.saveTime).toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            const templateName = templateNames[draft.templateType] || draft.templateType;
+            
+            card.innerHTML = `
+                <div class="flex items-start justify-between mb-2">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-gray-900 text-sm line-clamp-1">${draft.title || '未命名草稿'}</h3>
+                        <p class="text-xs text-gray-500 mt-1">${templateName}</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="event.stopPropagation(); editDraft(${draft.id})" class="p-1.5 hover:bg-gray-100 rounded-lg">
+                            <svg class="icon-sm text-gray-600" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                        <button onclick="event.stopPropagation(); deleteDraft(${draft.id})" class="p-1.5 hover:bg-gray-100 rounded-lg">
+                            <svg class="icon-sm text-red-500" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mb-2">
+                    <p class="text-sm text-gray-700 line-clamp-2">${draft.content || '暂无内容'}</p>
+                </div>
+                
+                <div class="flex items-center justify-between text-xs text-gray-500">
+                    <span>保存时间：${saveTime}</span>
+                    ${draft.media && draft.media.length > 0 ? `
+                        <span class="flex items-center">
+                            <svg class="icon-sm mr-1" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            ${draft.media.length}张图片
+                        </span>
+                    ` : ''}
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        function showDraftDetail(draft) {
+            currentDraft = draft;
+            const modal = document.getElementById('draft-detail-modal');
+            const content = document.getElementById('draft-detail-content');
+            
+            const saveTime = new Date(draft.saveTime).toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            const templateName = templateNames[draft.templateType] || draft.templateType;
+            
+            content.innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-1">标题</h4>
+                        <p class="text-sm text-gray-700">${draft.title || '未命名草稿'}</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-1">模板类型</h4>
+                        <p class="text-sm text-gray-700">${templateName}</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-1">内容</h4>
+                        <p class="text-sm text-gray-700 whitespace-pre-line">${draft.content || '暂无内容'}</p>
+                    </div>
+                    
+                    ${draft.tags && draft.tags.length > 0 ? `
+                        <div>
+                            <h4 class="font-medium text-gray-900 mb-1">标签</h4>
+                            <div class="flex flex-wrap gap-2">
+                                ${draft.tags.map(tag => `<span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">${tag}</span>`).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${draft.media && draft.media.length > 0 ? `
+                        <div>
+                            <h4 class="font-medium text-gray-900 mb-1">图片</h4>
+                            <div class="grid grid-cols-3 gap-2">
+                                ${draft.media.map((media, index) => `
+                                    <img src="${media.url}" alt="图片${index + 1}" class="w-full h-20 object-cover rounded-lg">
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-1">保存时间</h4>
+                        <p class="text-sm text-gray-700">${saveTime}</p>
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-4">
+                        <button onclick="editDraft(${draft.id})" class="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700">
+                            继续编辑
+                        </button>
+                        <button onclick="deleteDraft(${draft.id})" class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">
+                            删除草稿
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+        }
+        
+        function hideDraftDetail() {
+            document.getElementById('draft-detail-modal').classList.add('hidden');
+            currentDraft = null;
+        }
+        
+        function createNewDraft() {
+            localStorage.removeItem('currentDraft');
+            window.location.href = 'index-offline.html';
+        }
+        
+        function editDraft(draftId) {
+            const drafts = JSON.parse(localStorage.getItem('drafts') || '[]');
+            const draft = drafts.find(d => d.id === draftId);
+            
+            if (draft) {
+                localStorage.setItem('currentDraft', JSON.stringify(draft));
+                window.location.href = 'index-offline.html';
+            }
+        }
+        
+        function deleteDraft(draftId) {
+            if (!confirm('确定要删除这个草稿吗？')) {
+                return;
+            }
+            
+            const drafts = JSON.parse(localStorage.getItem('drafts') || '[]');
+            const filteredDrafts = drafts.filter(d => d.id !== draftId);
+            localStorage.setItem('drafts', JSON.stringify(filteredDrafts));
+            
+            showToast('草稿已删除');
+            hideDraftDetail();
+            loadDrafts();
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        init();
+    </script>
+</body>
+</html>
