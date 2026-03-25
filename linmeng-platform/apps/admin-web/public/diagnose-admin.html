@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>管理员权限诊断</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      border-bottom: 2px solid #409EFF;
+      padding-bottom: 10px;
+    }
+    .info-box {
+      background: #f9f9f9;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 5px;
+      border-left: 4px solid #409EFF;
+    }
+    .error {
+      color: #F56C6C;
+      border-left-color: #F56C6C;
+    }
+    .success {
+      color: #67C23A;
+      border-left-color: #67C23A;
+    }
+    .warning {
+      color: #E6A23C;
+      border-left-color: #E6A23C;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 13px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px 5px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .btn-primary {
+      background: #409EFF;
+      color: white;
+    }
+    .btn-danger {
+      background: #F56C6C;
+      color: white;
+    }
+    .btn-success {
+      background: #67C23A;
+      color: white;
+    }
+    button:hover {
+      opacity: 0.8;
+    }
+    .step {
+      margin: 20px 0;
+      padding: 15px;
+      background: #ecf5ff;
+      border-radius: 5px;
+    }
+    .step-number {
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      background: #409EFF;
+      color: white;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 30px;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 管理员权限诊断工具</h1>
+    
+    <div id="diagnosis"></div>
+    
+    <div id="actions" style="margin-top: 30px; display: none;">
+      <h3>🛠️ 解决方案</h3>
+      <div id="solution"></div>
+    </div>
+  </div>
+  
+  <script>
+    const token = localStorage.getItem('admin_token');
+    const userStr = localStorage.getItem('admin_user');
+    const diagnosisDiv = document.getElementById('diagnosis');
+    const actionsDiv = document.getElementById('actions');
+    const solutionDiv = document.getElementById('solution');
+    
+    let issues = [];
+    let user = null;
+    
+    // 诊断步骤1：检查Token
+    diagnosisDiv.innerHTML += '<div class="info-box"><h3>步骤1：检查登录Token</h3></div>';
+    if (!token) {
+      diagnosisDiv.innerHTML += '<div class="info-box error">❌ 未找到登录Token，您可能未登录</div>';
+      issues.push('not_logged_in');
+    } else {
+      diagnosisDiv.innerHTML += '<div class="info-box success">✅ Token存在</div>';
+      diagnosisDiv.innerHTML += `<div class="info-box"><pre>Token: ${token.substring(0, 50)}...</pre></div>`;
+    }
+    
+    // 诊断步骤2：检查用户信息
+    diagnosisDiv.innerHTML += '<div class="info-box"><h3>步骤2：检查用户信息</h3></div>';
+    if (!userStr) {
+      diagnosisDiv.innerHTML += '<div class="info-box error">❌ 未找到用户信息</div>';
+      issues.push('no_user_info');
+    } else {
+      try {
+        user = JSON.parse(userStr);
+        diagnosisDiv.innerHTML += '<div class="info-box success">✅ 用户信息解析成功</div>';
+        diagnosisDiv.innerHTML += `<div class="info-box"><pre>${JSON.stringify(user, null, 2)}</pre></div>`;
+        
+        // 检查关键字段
+        if (!user.role) {
+          diagnosisDiv.innerHTML += '<div class="info-box error">❌ 用户信息中缺少role字段</div>';
+          issues.push('missing_role');
+        } else {
+          diagnosisDiv.innerHTML += `<div class="info-box success">✅ 角色字段存在: ${user.role}</div>`;
+          
+          if (user.role === 'super_admin') {
+            diagnosisDiv.innerHTML += '<div class="info-box success">✅ 您是超级管理员</div>';
+          } else {
+            diagnosisDiv.innerHTML += `<div class="info-box warning">⚠️ 您的角色是: ${user.role}，不是超级管理员</div>`;
+            issues.push('not_super_admin');
+          }
+        }
+      } catch (e) {
+        diagnosisDiv.innerHTML += '<div class="info-box error">❌ 用户信息解析失败</div>';
+        diagnosisDiv.innerHTML += `<div class="info-box"><pre>原始数据: ${userStr}</pre></div>`;
+        issues.push('parse_error');
+      }
+    }
+    
+    // 诊断步骤3：检查管理员管理页面访问权限
+    diagnosisDiv.innerHTML += '<div class="info-box"><h3>步骤3：检查管理员管理页面访问权限</h3></div>';
+    if (user && user.role === 'super_admin') {
+      diagnosisDiv.innerHTML += '<div class="info-box success">✅ 您有权限访问管理员管理页面</div>';
+    } else {
+      diagnosisDiv.innerHTML += '<div class="info-box error">❌ 您没有权限访问管理员管理页面</div>';
+    }
+    
+    // 显示解决方案
+    actionsDiv.style.display = 'block';
+    
+    if (issues.length === 0) {
+      solutionDiv.innerHTML = `
+        <div class="step">
+          <span class="step-number">✓</span>
+          <strong>诊断结果：一切正常！</strong>
+          <p>您的账户状态正常，应该可以访问管理员管理页面。</p>
+          <button class="btn-primary" onclick="location.href='/admin'">前往管理员管理页面</button>
+        </div>
+      `;
+    } else {
+      let solutionHTML = '';
+      
+      if (issues.includes('not_logged_in') || issues.includes('no_user_info')) {
+        solutionHTML += `
+          <div class="step">
+            <span class="step-number">1</span>
+            <strong>重新登录</strong>
+            <p>您需要重新登录系统。请使用超级管理员账户：</p>
+            <p><strong>手机号：13800138000</strong></p>
+            <p><strong>密码：admin123</strong></p>
+            <button class="btn-primary" onclick="clearAndLogin()">重新登录</button>
+          </div>
+        `;
+      } else if (issues.includes('parse_error') || issues.includes('missing_role')) {
+        solutionHTML += `
+          <div class="step">
+            <span class="step-number">1</span>
+            <strong>清除缓存并重新登录</strong>
+            <p>您的用户信息可能已损坏，需要清除缓存并重新登录。</p>
+            <button class="btn-danger" onclick="clearAndLogin()">清除缓存并重新登录</button>
+          </div>
+        `;
+      } else if (issues.includes('not_super_admin')) {
+        solutionHTML += `
+          <div class="step">
+            <span class="step-number">1</span>
+            <strong>使用超级管理员账户登录</strong>
+            <p>您当前登录的不是超级管理员账户。请使用以下账户登录：</p>
+            <p><strong>手机号：13800138000</strong></p>
+            <p><strong>密码：admin123</strong></p>
+            <button class="btn-primary" onclick="clearAndLogin()">使用超级管理员登录</button>
+          </div>
+        `;
+      }
+      
+      solutionDiv.innerHTML = solutionHTML;
+    }
+    
+    function clearAndLogin() {
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_user');
+      alert('已清除登录信息，即将跳转到登录页面');
+      location.href = '/login';
+    }
+  </script>
+</body>
+</html>

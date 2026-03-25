@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>检查登录状态</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .info-box {
+      background: #f5f5f5;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+    }
+    .error {
+      color: red;
+    }
+    .success {
+      color: green;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>管理员登录状态检查</h1>
+  
+  <div class="info-box">
+    <h3>当前登录状态：</h3>
+    <div id="loginStatus"></div>
+  </div>
+  
+  <div class="info-box">
+    <h3>用户信息：</h3>
+    <pre id="userInfo"></pre>
+  </div>
+  
+  <div class="info-box">
+    <h3>操作：</h3>
+    <button onclick="clearStorage()">清除登录信息并重新登录</button>
+    <button onclick="location.href='/admin'">前往管理员管理页面</button>
+  </div>
+  
+  <script>
+    const token = localStorage.getItem('admin_token');
+    const userStr = localStorage.getItem('admin_user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    
+    const statusDiv = document.getElementById('loginStatus');
+    const userInfoDiv = document.getElementById('userInfo');
+    
+    if (!token) {
+      statusDiv.innerHTML = '<span class="error">❌ 未登录</span>';
+      userInfoDiv.textContent = '无用户信息';
+    } else {
+      statusDiv.innerHTML = '<span class="success">✅ 已登录</span>';
+      
+      if (user) {
+        userInfoDiv.textContent = JSON.stringify(user, null, 2);
+        
+        if (user.role === 'super_admin') {
+          statusDiv.innerHTML += '<br><span class="success">✅ 您是超级管理员，可以访问管理员管理页面</span>';
+        } else {
+          statusDiv.innerHTML += '<br><span class="error">❌ 您不是超级管理员，无法访问管理员管理页面</span>';
+        }
+      } else {
+        userInfoDiv.textContent = '用户信息格式错误';
+      }
+    }
+    
+    function clearStorage() {
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_user');
+      alert('已清除登录信息，请重新登录');
+      location.href = '/login';
+    }
+  </script>
+</body>
+</html>
