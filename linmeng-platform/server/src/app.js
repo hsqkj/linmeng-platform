@@ -23,11 +23,15 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: process.env.CORS_ORIGIN || '*',
-    methods: ['GET', 'POST']
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
   }
 });
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
@@ -44,6 +48,10 @@ app.use('/api/sponsor', sponsorRoutes);
 app.use('/api/tag', tagRoutes);
 app.use('/api/sponsor-comment', sponsorCommentRoutes);
 app.use('/api/salesman', salesmanRoutes);
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 app.use(errorHandler);
 
