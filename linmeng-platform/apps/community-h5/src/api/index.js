@@ -65,6 +65,11 @@ export default {
     incrementConsult: (id) => request.put(`/sponsor/${id}/consult`)
   },
   
+  sponsorComment: {
+    create: (data) => request.post('/sponsor-comment/create', data),
+    getList: (sponsorId) => request.get(`/sponsor-comment/list/${sponsorId}`)
+  },
+  
   tag: {
     getAll: (params) => request.get('/tag/all', { params })
   }

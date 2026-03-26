@@ -24,7 +24,7 @@
       >
         <div class="merchant-info">
           <van-image
-            :src="item.merchant?.logo || 'https://via.placeholder.com/50'"
+            :src="getImageUrl(item.merchant?.logo) || 'https://via.placeholder.com/50'"
             round
             width="50"
             height="50"
@@ -47,6 +47,16 @@
         </div>
         
         <div class="sponsor-detail">{{ item.sponsor_detail }}</div>
+        
+        <div class="sponsor-tags" v-if="getSponsorTags(item).length > 0">
+          <van-tag 
+            v-for="(tag, index) in getSponsorTags(item).slice(0, 3)" 
+            :key="index"
+            plain 
+            size="small"
+            style="margin-right: 4px"
+          >{{ tag }}</van-tag>
+        </div>
         
         <div class="item-footer">
           <span class="time">{{ formatDateTime(item.create_time) }}</span>
@@ -74,7 +84,7 @@
         <div class="popup-body">
           <div class="merchant-card">
             <van-image
-              :src="selectedItem.merchant?.logo || 'https://via.placeholder.com/80'"
+              :src="getImageUrl(selectedItem.merchant?.logo) || 'https://via.placeholder.com/80'"
               round
               width="60"
               height="60"
@@ -100,7 +110,6 @@
           <template v-if="isLoggedIn">
             <van-cell-group inset title="联系方式">
               <van-cell title="联系人" :value="selectedItem.contact_name || '暂无'" />
-              <van-cell title="联系电话" :value="selectedItem.contact_phone || '暂无'" />
             </van-cell-group>
             
             <van-cell-group inset title="图片展示" v-if="parsedImages.length > 0">
@@ -135,12 +144,8 @@
               <van-button type="primary" size="small" @click="router.push('/login')">立即登录</van-button>
             </div>
           </template>
-        </div>
-        
-        <div class="popup-footer" v-if="isLoggedIn">
-          <van-button type="primary" block round @click="contactMerchant">
-            联系商家
-          </van-button>
+          
+          <SponsorComment v-if="selectedItem" :sponsorId="selectedItem.id" :isLoggedIn="isLoggedIn" />
         </div>
       </div>
     </van-popup>
@@ -149,14 +154,17 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { showSuccessToast, showImagePreview } from 'vant'
 import api from '../../api'
-import { formatDateTime } from '../../utils'
+import { formatDateTime, getImageUrl, getMemberLevel } from '../../utils'
+import SponsorComment from '../../components/SponsorComment.vue'
 
 const router = useRouter()
+const route = useRoute()
 const isLoggedIn = ref(false)
 const list = ref([])
+const allTags = ref([])
 const filterType = ref(0)
 const sortBy = ref('comprehensive')
 const showDetailPopup = ref(false)
@@ -179,11 +187,6 @@ const sortOptions = [
   { text: '匹配度高', value: 'match' }
 ]
 
-const getMemberLevel = (level) => {
-  const levels = ['普通用户', '普通会员', '银卡会员', '金卡会员', '钻石会员']
-  return levels[level] || '普通用户'
-}
-
 const parsedImages = computed(() => {
   if (!selectedItem.value?.images) return []
   try {
@@ -198,6 +201,63 @@ const previewImage = (index) => {
     images: parsedImages.value,
     startPosition: index
   })
+}
+
+const getSponsorTags = (item) => {
+  console.log('getSponsorTags called with item:', item)
+  const tags = []
+  
+  if (item.tags) {
+    console.log('item.tags:', item.tags)
+    try {
+      const tagIds = JSON.parse(item.tags)
+      console.log('解析后的tagIds:', tagIds)
+      if (Array.isArray(tagIds) && tagIds.length > 0) {
+        const tagNames = tagIds.map(id => {
+          const tag = allTags.value.find(t => t.id === id)
+          console.log(`查找标签ID ${id}, 找到:`, tag)
+          return tag ? tag.name : null
+        }).filter(name => name)
+        console.log('系统标签名称:', tagNames)
+        tags.push(...tagNames)
+      }
+    } catch (e) {
+      console.error('解析标签失败:', e)
+    }
+  } else {
+    console.log('item没有tags字段')
+  }
+  
+  if (item.custom_tags) {
+    console.log('item.custom_tags:', item.custom_tags)
+    try {
+      const customTags = JSON.parse(item.custom_tags)
+      console.log('解析后的customTags:', customTags)
+      if (Array.isArray(customTags)) {
+        tags.push(...customTags)
+      }
+    } catch (e) {
+      console.error('解析自定义标签失败:', e)
+    }
+  } else {
+    console.log('item没有custom_tags字段')
+  }
+  
+  console.log('最终返回的tags:', tags)
+  return tags
+}
+
+const loadTags = async () => {
+  try {
+    const res = await api.tag.getAll({ category: 'merchant' })
+    console.log('标签API返回:', res)
+    if (res.code === 200) {
+      allTags.value = res.data || []
+      console.log('所有标签:', allTags.value)
+    }
+  } catch (error) {
+    console.error('获取标签失败:', error)
+  }
 }
 
 const fetchList = async () => {
@@ -219,8 +279,15 @@ const fetchList = async () => {
     }
     
     const res = await api.sponsor.getList(params)
+    console.log('赞助列表API返回:', res)
     if (res.code === 200) {
       list.value = res.data.list || []
+      console.log('赞助列表数据:', list.value)
+      if (list.value.length > 0) {
+        console.log('第一个赞助项:', list.value[0])
+        console.log('第一个赞助项的tags:', list.value[0].tags)
+        console.log('第一个赞助项的custom_tags:', list.value[0].custom_tags)
+      }
     }
   } catch (error) {
     console.error('获取列表失败:', error)
@@ -228,6 +295,9 @@ const fetchList = async () => {
 }
 
 const showDetail = async (item) => {
+  const token = localStorage.getItem('community_token')
+  isLoggedIn.value = !!token
+  
   selectedItem.value = item
   showDetailPopup.value = true
   
@@ -240,29 +310,20 @@ const showDetail = async (item) => {
   }
 }
 
-const contactMerchant = async () => {
-  try {
-    if (selectedItem.value?.id) {
-      await api.sponsor.incrementConsult(selectedItem.value.id)
-    }
-  } catch (error) {
-    console.error('增加咨询量失败:', error)
-  }
-  
-  if (selectedItem.value?.contact_phone) {
-    window.location.href = `tel:${selectedItem.value.contact_phone}`
-  } else if (selectedItem.value?.merchant?.phone) {
-    window.location.href = `tel:${selectedItem.value.merchant.phone}`
-  } else {
-    showSuccessToast('暂无联系方式')
-  }
-}
-
-onMounted(() => {
+onMounted(async () => {
   const token = localStorage.getItem('community_token')
   isLoggedIn.value = !!token
   
-  fetchList()
+  await loadTags()
+  await fetchList()
+  
+  if (route.query.highlight) {
+    const highlightId = parseInt(route.query.highlight)
+    const item = list.value.find(i => i.id === highlightId)
+    if (item) {
+      showDetail(item)
+    }
+  }
 })
 </script>
 
@@ -332,6 +393,13 @@ onMounted(() => {
   overflow: hidden;
 }
 
+.sponsor-tags {
+  margin-bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
 .item-footer {
   display: flex;
   justify-content: space-between;
@@ -365,7 +433,6 @@ onMounted(() => {
 .popup-body {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 80px;
 }
 
 .merchant-card {
@@ -409,13 +476,10 @@ onMounted(() => {
 }
 
 .popup-footer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
   padding: 12px 16px;
   background: #fff;
   border-top: 1px solid #f0f0f0;
+  margin-top: 16px;
 }
 
 .image-gallery {

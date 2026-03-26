@@ -1,0 +1,30 @@
+{
+  "development": {
+    "username": "root",
+    "password": "root",
+    "database": "linmeng",
+    "host": "localhost",
+    "dialect": "mysql",
+    "timezone": "+08:00",
+    "define": {
+      "charset": "utf8mb4",
+      "collate": "utf8mb4_unicode_ci"
+    }
+  },
+  "test": {
+    "username": "root",
+    "password": "root",
+    "database": "linmeng_test",
+    "host": "localhost",
+    "dialect": "mysql",
+    "timezone": "+08:00"
+  },
+  "production": {
+    "username": "root",
+    "password": "root",
+    "database": "linmeng",
+    "host": "localhost",
+    "dialect": "mysql",
+    "timezone": "+08:00"
+  }
+}

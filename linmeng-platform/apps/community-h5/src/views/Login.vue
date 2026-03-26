@@ -2,63 +2,50 @@
   <div class="login-page">
     <div class="header">
       <h1 class="title">邻盟</h1>
-      <p class="slogan">社区活动与商业资源智能对接助手</p>
-      <p class="sub-slogan">邻盟聚力，资源互通，让社区活动落地更轻松</p>
+      <p class="slogan">社区活动缺资源？社区空间缺运营？社区服务缺专家？【邻盟智能助手】免费智能匹配商家赞助、物资、人力、场地、技术、专家、媒体宣传等优质爱心资源。</p>
     </div>
     
-    <div class="role-select">
-      <van-button type="primary" block round @click="handleLogin('community')">
-        社区用户入口
-      </van-button>
-      <van-button type="default" block round @click="handleLogin('merchant')">
-        商家用户入口
-      </van-button>
-    </div>
-    
-    <van-popup v-model:show="showPhoneLogin" position="bottom" round>
-      <div class="phone-login">
-        <h3>手机号登录</h3>
-        <van-form @submit="onSubmit">
-          <van-field
-            v-model="phone"
-            name="phone"
-            label="手机号"
-            placeholder="请输入手机号"
-            type="tel"
-            maxlength="11"
-            :rules="[{ required: true, message: '请输入手机号' }, { pattern: /^1[3-9]\d{9}$/, message: '手机号格式错误' }]"
-          />
-          <van-field
-            v-model="smsCode"
-            name="smsCode"
-            label="验证码"
-            placeholder="请输入验证码"
-            maxlength="6"
-            :rules="[{ required: true, message: '请输入验证码' }]"
-          >
-            <template #button>
-              <van-button 
-                size="small" 
-                type="primary" 
-                :disabled="countdown > 0"
-                @click="handleSendCode"
-              >
-                {{ countdown > 0 ? `${countdown}秒后重发` : '发送验证码' }}
-              </van-button>
-            </template>
-          </van-field>
-          <div class="submit-btn">
-            <van-button type="primary" block round native-type="submit" :loading="loading">
-              登录
+    <div class="login-form">
+      <van-form @submit="onSubmit">
+        <van-field
+          v-model="phone"
+          name="phone"
+          label="手机号"
+          placeholder="请输入手机号"
+          type="tel"
+          maxlength="11"
+          :rules="[{ required: true, message: '请输入手机号' }, { pattern: /^1[3-9]\d{9}$/, message: '手机号格式错误' }]"
+        />
+        <van-field
+          v-model="smsCode"
+          name="smsCode"
+          label="验证码"
+          placeholder="请输入验证码"
+          maxlength="6"
+          :rules="[{ required: true, message: '请输入验证码' }]"
+        >
+          <template #button>
+            <van-button 
+              size="small" 
+              type="primary" 
+              :disabled="countdown > 0"
+              @click="handleSendCode"
+            >
+              {{ countdown > 0 ? `${countdown}秒后重发` : '发送验证码' }}
             </van-button>
-          </div>
-          <div class="register-link">
-            <span>还没有账号？</span>
-            <a @click="goToRegister">立即注册</a>
-          </div>
-        </van-form>
-      </div>
-    </van-popup>
+          </template>
+        </van-field>
+        <div class="submit-btn">
+          <van-button type="primary" block round native-type="submit" :loading="loading">
+            登录
+          </van-button>
+        </div>
+        <div class="register-link">
+          <span>还没有账号？</span>
+          <a @click="goToRegister">立即注册</a>
+        </div>
+      </van-form>
+    </div>
   </div>
 </template>
 
@@ -70,21 +57,10 @@ import api from '../api'
 
 const router = useRouter()
 
-const showPhoneLogin = ref(false)
 const phone = ref('')
 const smsCode = ref('')
 const loading = ref(false)
 const countdown = ref(0)
-const selectedRole = ref('')
-
-const handleLogin = (role) => {
-  if (role === 'merchant') {
-    showDialog({ message: '请使用商家端APP' })
-    return
-  }
-  selectedRole.value = role
-  showPhoneLogin.value = true
-}
 
 const handleSendCode = async () => {
   if (!phone.value) {
@@ -102,8 +78,10 @@ const handleSendCode = async () => {
     if (res.code === 200) {
       if (res.data && res.data.code) {
         smsCode.value = res.data.code
+        showDialog({ message: `验证码已发送：${res.data.code}` })
+      } else {
+        showDialog({ message: '验证码已发送' })
       }
-      showDialog({ message: '验证码已发送' })
       countdown.value = 60
       const timer = setInterval(() => {
         countdown.value--
@@ -111,9 +89,11 @@ const handleSendCode = async () => {
           clearInterval(timer)
         }
       }, 1000)
+    } else {
+      showDialog({ message: res.message || '发送失败' })
     }
   } catch (error) {
-    showDialog({ message: error.message || '发送验证码失败' })
+    showDialog({ message: error.response?.data?.message || error.message || '发送验证码失败' })
   }
 }
 
@@ -142,6 +122,9 @@ const onSubmit = async () => {
     })
     if (res.code === 200) {
       localStorage.setItem('community_token', res.data.token)
+      if (res.data.user) {
+        localStorage.setItem('community_profile', JSON.stringify(res.data.user))
+      }
       if (res.data.user.status === 0) {
         showDialog({ message: '账号待审核，请等待管理员审核' })
       } else {
@@ -161,7 +144,6 @@ const onSubmit = async () => {
 }
 
 const goToRegister = () => {
-  showPhoneLogin.value = false
   router.push('/register')
 }
 </script>
@@ -188,30 +170,17 @@ const goToRegister = () => {
 }
 
 .slogan {
-  font-size: 18px;
-  color: #fff;
-  margin-bottom: 8px;
-}
-
-.sub-slogan {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.role-select {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.phone-login {
-  padding: 24px;
-}
-
-.phone-login h3 {
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
   text-align: center;
-  margin-bottom: 24px;
+}
+
+.login-form {
+  width: 100%;
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
 }
 
 .submit-btn {

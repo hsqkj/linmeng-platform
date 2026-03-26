@@ -39,7 +39,7 @@
         >
           <template #thumb>
             <van-image
-              :src="item.cover_img || 'https://via.placeholder.com/100'"
+              :src="getImageUrl(item.cover_img) || 'https://via.placeholder.com/100'"
               width="100"
               height="80"
               fit="cover"
@@ -204,7 +204,7 @@
         <div class="popup-body">
           <div class="community-card">
             <van-image
-              :src="selectedActivity.community?.logo || 'https://via.placeholder.com/80'"
+              :src="getImageUrl(selectedActivity.community?.logo) || 'https://via.placeholder.com/80'"
               round
               width="60"
               height="60"
@@ -258,7 +258,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showSuccessToast, showToast } from 'vant'
 import api from '../api'
-import { formatDateTime } from '../utils'
+import { formatDateTime, getImageUrl } from '../utils'
 
 const router = useRouter()
 const isLoggedIn = ref(false)

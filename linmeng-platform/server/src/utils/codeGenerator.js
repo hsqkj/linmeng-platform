@@ -63,6 +63,14 @@ class CodeGenerator {
   static async generateCooperationCode() {
     return await this.generateCode('HZ', 'cooperation', 'cooperation_code');
   }
+
+  static async generateCommentCode() {
+    return await this.generateCode('COMMENT', 'sponsor_comments', 'comment_code');
+  }
+
+  static async generateCommissionNo() {
+    return await this.generateCode('TC', 'commissions', 'commission_code');
+  }
 }
 
 module.exports = CodeGenerator;

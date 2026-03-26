@@ -161,6 +161,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showSuccessToast, showToast } from 'vant'
 import api from '../../api'
+import { getImageUrl } from '../../utils'
 
 const router = useRouter()
 const loading = ref(false)
@@ -273,14 +274,6 @@ const addCustomTag = () => {
 
 const removeCustomTag = (index) => {
   customTags.value.splice(index, 1)
-}
-
-const getImageUrl = (url) => {
-  if (!url) return ''
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url.replace('http://localhost:3000', 'http://localhost:3001')
-  }
-  return `http://localhost:3001${url.startsWith('/') ? '' : '/'}${url}`
 }
 
 const onIndustryConfirm = ({ selectedOptions }) => {

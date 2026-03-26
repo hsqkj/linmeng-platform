@@ -139,6 +139,16 @@ const MerchantUser = sequelize.define('merchant_user', {
     allowNull: true,
     comment: '驳回原因'
   },
+  channel_code: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    comment: '渠道码'
+  },
+  salesman_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: '业务员ID'
+  },
   create_time: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW

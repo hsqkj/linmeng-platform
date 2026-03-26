@@ -13,6 +13,9 @@
     "dev:community": "npm run dev --workspace=apps/community-h5",
     "dev:merchant": "npm run dev --workspace=apps/merchant-h5",
     "dev:admin": "npm run dev --workspace=apps/admin-web",
+    "dev:salesman": "npm run dev --workspace=apps/salesman-h5",
+    "dev:portal": "npm run dev --workspace=apps/portal",
+    "dev:all": "concurrently \"npm run dev:server\" \"npm run dev:portal\" \"npm run dev:community\" \"npm run dev:merchant\" \"npm run dev:salesman\"",
     "build": "npm run build --workspaces",
     "install:all": "npm install && npm install --workspaces"
   },

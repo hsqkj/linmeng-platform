@@ -84,6 +84,12 @@ const routes = [
     meta: { title: '消息中心', requiresAuth: true }
   },
   {
+    path: '/comment-message',
+    name: 'CommentMessage',
+    component: () => import('../views/CommentMessage.vue'),
+    meta: { title: '留言消息', requiresAuth: true }
+  },
+  {
     path: '/sponsor',
     name: 'SponsorList',
     component: () => import('../views/sponsor/List.vue'),
@@ -94,6 +100,12 @@ const routes = [
     name: 'SponsorCreate',
     component: () => import('../views/sponsor/Create.vue'),
     meta: { title: '发布赞助信息', requiresAuth: true }
+  },
+  {
+    path: '/sponsor/edit/:id',
+    name: 'SponsorEdit',
+    component: () => import('../views/sponsor/Edit.vue'),
+    meta: { title: '编辑赞助信息', requiresAuth: true }
   }
 ]
 

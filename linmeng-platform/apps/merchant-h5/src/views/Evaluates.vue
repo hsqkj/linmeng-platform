@@ -44,7 +44,7 @@
           <template #thumb>
             <van-image
               v-if="item.img"
-              :src="item.img.split(',')[0]"
+              :src="getImageUrl(item.img.split(',')[0])"
               width="80"
               height="80"
               fit="cover"
@@ -69,6 +69,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showImagePreview } from 'vant'
 import api from '../api'
+import { getImageUrl } from '../utils'
 
 const router = useRouter()
 const activeTabbar = ref(0)

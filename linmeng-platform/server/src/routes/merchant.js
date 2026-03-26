@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { MerchantUser, Activity, Cooperation, Evaluate, MemberPackage, Order, CommunityUser } = require('../models')
+const { MerchantUser, Activity, Cooperation, Evaluate, MemberPackage, Order, CommunityUser, Salesman, Message, Commission } = require('../models')
 const authMiddleware = require('../middleware/auth')
 const { Op } = require('sequelize')
 const { verifyCode } = require('../utils/smsCodes')
@@ -9,7 +9,7 @@ const MatchingAlgorithm = require('../utils/matchingAlgorithm')
 
 router.post('/register-new', async (req, res) => {
   try {
-    const { phone, sms_code, business_name, contact_name, industry, address, latitude, longitude, logo, description, sponsor_types, sponsor_detail, return_expect, target_crowd, license_img } = req.body
+    const { phone, sms_code, business_name, contact_name, industry, address, latitude, longitude, logo, description, sponsor_types, sponsor_detail, return_expect, target_crowd, license_img, channel_code } = req.body
     
     if (!phone || !sms_code) {
       return res.status(400).json({ code: 400, message: '请输入手机号和验证码' })
@@ -31,6 +31,16 @@ router.post('/register-new', async (req, res) => {
     
     const merchant_code = await CodeGenerator.generateMerchantCode()
     
+    let salesman_id = null
+    if (channel_code) {
+      const salesman = await Salesman.findOne({
+        where: { channel_code, status: 1 }
+      })
+      if (salesman) {
+        salesman_id = salesman.id
+      }
+    }
+    
     const user = await MerchantUser.create({
       phone,
       merchant_code,
@@ -47,6 +57,8 @@ router.post('/register-new', async (req, res) => {
       return_expect: return_expect ? JSON.stringify(return_expect) : null,
       target_crowd: target_crowd ? JSON.stringify(target_crowd) : null,
       license_img,
+      channel_code: channel_code || null,
+      salesman_id,
       status: 0
     })
 
@@ -347,6 +359,19 @@ router.post('/apply/:activityId', authMiddleware, async (req, res) => {
       status: 0
     })
 
+    const merchant = await MerchantUser.findByPk(merchantId)
+    
+    await Message.create({
+      user_id: activity.community_id,
+      user_type: 0,
+      sender_type: 2,
+      sender_id: merchantId,
+      msg_type: 1,
+      content: `商家「${merchant?.business_name || ''}」报名了您的活动「${activity?.title || ''}」，请及时查看并处理。`,
+      activity_id: activityId,
+      read_status: 0
+    })
+
     res.json({
       code: 200,
       message: '报名成功',
@@ -557,6 +582,32 @@ router.post('/order/pay-success/:orderCode', async (req, res) => {
     })
     
     await order.update({ pay_status: 1 })
+    
+    if (merchant.channel_code) {
+      const salesman = await Salesman.findOne({ 
+        where: { channel_code: merchant.channel_code } 
+      })
+      
+      if (salesman) {
+        const commissionRate = salesman.commission_rate || 10
+        const commissionAmount = (order.amount * commissionRate / 100).toFixed(2)
+        
+        const commissionCode = await CodeGenerator.generateCommissionNo()
+        
+        await Commission.create({
+          commission_code: commissionCode,
+          salesman_id: salesman.id,
+          merchant_id: merchant.id,
+          order_id: order.id,
+          order_amount: order.amount,
+          commission_rate: commissionRate,
+          commission_amount: commissionAmount,
+          status: 0
+        })
+        
+        console.log(`提成记录已创建: 业务员${salesman.name}, 提成金额${commissionAmount}元`)
+      }
+    }
     
     res.json({
       code: 200,

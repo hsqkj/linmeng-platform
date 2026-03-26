@@ -14,6 +14,8 @@ const adminRoutes = require('./routes/admin');
 const uploadRoutes = require('./routes/upload');
 const sponsorRoutes = require('./routes/sponsor');
 const tagRoutes = require('./routes/tag');
+const sponsorCommentRoutes = require('./routes/sponsorComment');
+const salesmanRoutes = require('./routes/salesman');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -40,6 +42,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/sponsor', sponsorRoutes);
 app.use('/api/tag', tagRoutes);
+app.use('/api/sponsor-comment', sponsorCommentRoutes);
+app.use('/api/salesman', salesmanRoutes);
 
 app.use(errorHandler);
 

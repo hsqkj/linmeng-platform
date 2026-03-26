@@ -17,7 +17,7 @@ router.get('/list', authMiddleware, async (req, res) => {
     }
     
     if (msg_type !== undefined) {
-      where.msg_type = msg_type
+      where.msg_type = parseInt(msg_type)
     }
 
     const offset = (page - 1) * pageSize

@@ -214,6 +214,28 @@
             />
           </template>
         </van-field>
+        
+        <van-field
+          v-model="form.channel_code"
+          name="channel_code"
+          label="渠道码"
+          placeholder="请输入渠道码（选填）"
+        >
+          <template #button>
+            <van-button 
+              size="small" 
+              type="default"
+              @click.prevent="verifyChannelCode"
+            >
+              验证
+            </van-button>
+          </template>
+        </van-field>
+        
+        <div v-if="salesmanInfo" class="salesman-info">
+          <van-icon name="checked" color="#07c160" />
+          <span>推荐业务员：{{ salesmanInfo.name }} ({{ salesmanInfo.phone }})</span>
+        </div>
       </van-cell-group>
       
       <div class="submit-btn">
@@ -239,17 +261,19 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { showSuccessToast, showFailToast, showLoadingToast, closeToast } from 'vant'
 import api from '../api'
 
 const router = useRouter()
+const route = useRoute()
 const loading = ref(false)
 const showIndustryPicker = ref(false)
 const logoList = ref([])
 const licenseList = ref([])
 const countdown = ref(0)
+const salesmanInfo = ref(null)
 
 const industryList = [
   '教育培训',
@@ -308,7 +332,8 @@ const form = reactive({
   },
   return_expect: [],
   target_crowd: [],
-  license_img: ''
+  license_img: '',
+  channel_code: ''
 })
 
 const sendCode = async () => {
@@ -428,6 +453,27 @@ const uploadFile = async (file, type) => {
   }
 }
 
+const verifyChannelCode = async () => {
+  if (!form.channel_code) {
+    showFailToast('请输入渠道码')
+    return
+  }
+  
+  try {
+    const res = await api.salesman.verifyChannel(form.channel_code)
+    if (res.code === 200) {
+      salesmanInfo.value = res.data
+      showSuccessToast('渠道码验证成功')
+    } else {
+      salesmanInfo.value = null
+      showFailToast(res.message || '渠道码无效')
+    }
+  } catch (error) {
+    salesmanInfo.value = null
+    showFailToast('渠道码验证失败')
+  }
+}
+
 const handleSubmit = async () => {
   if (!form.phone) {
     showFailToast('请输入手机号')
@@ -522,6 +568,13 @@ const handleSubmit = async () => {
     loading.value = false
   }
 }
+
+onMounted(() => {
+  if (route.query.channel_code) {
+    form.channel_code = route.query.channel_code
+    verifyChannelCode()
+  }
+})
 </script>
 
 <style scoped>
@@ -574,6 +627,22 @@ const handleSubmit = async () => {
   border-radius: 4px;
 }
 
+.salesman-info {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #07c160;
+  background: #f0fff0;
+  margin: 8px 16px;
+  border-radius: 4px;
+  border: 1px solid #07c160;
+}
+
+.salesman-info .van-icon {
+  margin-right: 8px;
+}
+</style>
 .field-tip .van-icon {
   margin-right: 6px;
 }

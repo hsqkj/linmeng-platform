@@ -108,10 +108,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { showConfirmDialog, showSuccessToast } from 'vant'
 import api from '../api'
+import { getImageUrl, getMemberLevel } from '../utils'
 
 const router = useRouter()
 const activeTabbar = ref(3)
@@ -130,19 +131,6 @@ const settingsActions = [
   { name: '修改手机号', key: 'phone' },
   { name: '清除缓存', key: 'cache' }
 ]
-
-const getMemberLevel = (level) => {
-  const levels = ['免费普通会员', '银卡会员', '金卡会员', '钻石会员']
-  return levels[level] || '免费普通会员'
-}
-
-const getImageUrl = (url) => {
-  if (!url) return ''
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url.replace('http://localhost:3000', 'http://localhost:3001')
-  }
-  return `http://localhost:3001${url.startsWith('/') ? '' : '/'}${url}`
-}
 
 const fetchUserInfo = async () => {
   try {

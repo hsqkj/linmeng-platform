@@ -135,7 +135,7 @@ const handleClick = async (item) => {
   }
   
   if (item.msg_type === 1 && item.activity_id) {
-    router.push(`/activity/${item.activity_id}`)
+    router.push(`/sponsor?highlight=${item.activity_id}`)
   }
 }
 
@@ -156,7 +156,6 @@ watch(activeTab, () => {
   page.value = 1
   list.value = []
   finished.value = false
-  onLoad()
 })
 
 onMounted(() => {

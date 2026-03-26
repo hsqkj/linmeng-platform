@@ -53,7 +53,18 @@ export default {
     getList: (params) => request.get('/sponsor/list', { params })
   },
   
+  sponsorComment: {
+    getUnreadCount: () => request.get('/sponsor-comment/merchant/unread'),
+    getMerchantList: (params) => request.get('/sponsor-comment/merchant/list', { params }),
+    markRead: (id) => request.put(`/sponsor-comment/${id}/read`),
+    reply: (data) => request.post('/sponsor-comment/reply', data)
+  },
+  
   tag: {
     getAll: (params) => request.get('/tag/all', { params })
+  },
+  
+  salesman: {
+    verifyChannel: (code) => request.get(`/salesman/channel/${code}`)
   }
 }

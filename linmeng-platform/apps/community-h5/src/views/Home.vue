@@ -3,9 +3,12 @@
     <van-nav-bar title="邻盟社区">
       <template #right>
         <div class="nav-right">
-          <van-badge :dot="unreadCount > 0" v-if="isLoggedIn">
-            <van-icon name="bell" size="20" @click="router.push('/message')" />
-          </van-badge>
+          <div v-if="isLoggedIn" class="user-info">
+            <span class="user-name">{{ userName }}</span>
+            <van-badge :dot="unreadCount > 0" class="notification-badge">
+              <van-icon name="bell" size="20" @click="router.push('/message')" />
+            </van-badge>
+          </div>
           <div class="auth-buttons" v-else>
             <van-button size="small" plain type="primary" @click="router.push('/login')">登录</van-button>
             <van-button size="small" type="primary" @click="router.push('/register')">注册</van-button>
@@ -157,6 +160,15 @@
                 <van-tag type="primary" size="small">{{ item.sponsor_type }}</van-tag>
               </div>
               <div class="sponsor-detail-preview">{{ item.sponsor_detail }}</div>
+              <div class="sponsor-tags-home" v-if="getSponsorTags(item).length > 0">
+                <van-tag 
+                  v-for="(tag, index) in getSponsorTags(item).slice(0, 3)" 
+                  :key="index"
+                  plain 
+                  size="small"
+                  style="margin-right: 4px"
+                >{{ tag }}</van-tag>
+              </div>
             </div>
           </div>
         </van-cell-group>
@@ -245,6 +257,8 @@
               <van-button type="primary" size="small" @click="router.push('/login')">立即登录</van-button>
             </div>
           </template>
+          
+          <SponsorComment v-if="selectedSponsor" :sponsorId="selectedSponsor.id" :isLoggedIn="isLoggedIn" />
         </div>
         
         <div class="popup-footer" v-if="isLoggedIn">
@@ -319,10 +333,12 @@ import { useRouter } from 'vue-router'
 import { showSuccessToast, showFailToast, showDialog, showImagePreview } from 'vant'
 import api from '../api'
 import { formatDateTime } from '../utils'
+import SponsorComment from '../components/SponsorComment.vue'
 
 const router = useRouter()
 const activeTab = ref(0)
 const isLoggedIn = ref(false)
+const userName = ref('')
 const statistics = ref({
   totalActivities: 0,
   recruitingActivities: 0,
@@ -335,6 +351,7 @@ const platformStats = ref({
 const recentActivities = ref([])
 const unreadCount = ref(0)
 const sponsorList = ref([])
+const allTags = ref([])
 const loadingSponsors = ref(true)
 const loadingActivities = ref(true)
 const showDetailPopup = ref(false)
@@ -375,6 +392,49 @@ const previewImage = (index) => {
     images: parsedImages.value,
     startPosition: index
   })
+}
+
+const loadTags = async () => {
+  try {
+    const res = await api.tag.getAll({ category: 'merchant' })
+    if (res.code === 200) {
+      allTags.value = res.data || []
+    }
+  } catch (error) {
+    console.error('获取标签失败:', error)
+  }
+}
+
+const getSponsorTags = (item) => {
+  const tags = []
+  
+  if (item.tags) {
+    try {
+      const tagIds = JSON.parse(item.tags)
+      if (Array.isArray(tagIds) && tagIds.length > 0) {
+        const tagNames = tagIds.map(id => {
+          const tag = allTags.value.find(t => t.id === id)
+          return tag ? tag.name : null
+        }).filter(name => name)
+        tags.push(...tagNames)
+      }
+    } catch (e) {
+      console.error('解析标签失败:', e)
+    }
+  }
+  
+  if (item.custom_tags) {
+    try {
+      const customTags = JSON.parse(item.custom_tags)
+      if (Array.isArray(customTags)) {
+        tags.push(...customTags)
+      }
+    } catch (e) {
+      console.error('解析自定义标签失败:', e)
+    }
+  }
+  
+  return tags
 }
 
 const showSponsorDetail = async (item) => {
@@ -506,6 +566,32 @@ const fetchData = async () => {
   const token = localStorage.getItem('community_token')
   isLoggedIn.value = !!token
   
+  if (isLoggedIn.value) {
+    let profileData = null
+    const profile = localStorage.getItem('community_profile')
+    
+    if (profile) {
+      try {
+        profileData = JSON.parse(profile)
+        userName.value = profileData.community_name || profileData.contact_person || '社区用户'
+      } catch (e) {
+        console.error('解析用户信息失败:', e)
+      }
+    }
+    
+    if (!profileData) {
+      try {
+        const res = await api.community.getProfile()
+        if (res.code === 200 && res.data) {
+          localStorage.setItem('community_profile', JSON.stringify(res.data))
+          userName.value = res.data.community_name || res.data.contact_person || '社区用户'
+        }
+      } catch (e) {
+        console.error('获取用户信息失败:', e)
+      }
+    }
+  }
+  
   try {
     console.log('开始获取平台统计数据...')
     const [platformStatsRes, sponsorRes] = await Promise.all([
@@ -564,6 +650,7 @@ const fetchData = async () => {
 }
 
 onMounted(() => {
+  loadTags()
   fetchData()
 })
 </script>
@@ -577,6 +664,22 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-name {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.notification-badge {
+  cursor: pointer;
 }
 
 .auth-buttons {
@@ -775,6 +878,13 @@ onMounted(() => {
   overflow: hidden;
 }
 
+.sponsor-tags-home {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
 .recent-activities {
   margin: var(--spacing-md);
 }
@@ -803,7 +913,6 @@ onMounted(() => {
 .popup-body {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 80px;
 }
 
 .merchant-card {
@@ -847,13 +956,10 @@ onMounted(() => {
 }
 
 .popup-footer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
   padding: var(--spacing-md);
   background: var(--bg-white);
   border-top: 1px solid var(--border-lighter);
+  margin-top: var(--spacing-md);
 }
 
 .image-gallery {

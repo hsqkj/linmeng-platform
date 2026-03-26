@@ -134,7 +134,10 @@ router.post('/login', async (req, res) => {
           id: user.id,
           phone: user.phone,
           status: user.status,
-          is_new: !user.community_name && !user.business_name
+          is_new: !user.community_name && !user.business_name,
+          community_name: user.community_name,
+          contact_person: user.contact_person,
+          business_name: user.business_name
         }
       }
     }

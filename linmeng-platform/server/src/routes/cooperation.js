@@ -179,6 +179,7 @@ router.put('/:id/accept', authMiddleware, async (req, res) => {
       user_type: 1,
       msg_type: 0,
       content: `您报名的活动合作申请已被社区接受，请及时联系社区负责人确认合作细节。`,
+      activity_id: cooperation.activity_id,
       read_status: 0
     })
 
@@ -221,6 +222,7 @@ router.put('/:id/reject', authMiddleware, async (req, res) => {
       user_type: 1,
       msg_type: 0,
       content: `您报名的活动「${activity?.title || ''}」合作申请已被拒绝。原因：${reason || '无'}`,
+      activity_id: cooperation.activity_id,
       read_status: 0
     })
 

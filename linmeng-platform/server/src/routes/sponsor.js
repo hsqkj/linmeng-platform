@@ -1,6 +1,7 @@
 const express = require('express')
+
 const router = express.Router()
-const { SponsorInfo, MerchantUser } = require('../models')
+const { SponsorInfo, MerchantUser, SponsorComment } = require('../models')
 const authMiddleware = require('../middleware/auth')
 const { Op } = require('sequelize')
 const CodeGenerator = require('../utils/codeGenerator')
@@ -176,9 +177,24 @@ router.get('/my', authMiddleware, async (req, res) => {
       order: [['create_time', 'DESC']]
     })
     
+    const listWithUnreadCount = await Promise.all(
+      list.map(async (item) => {
+        const unreadCount = await SponsorComment.count({
+          where: {
+            sponsor_id: item.id,
+            is_read: false
+          }
+        })
+        return {
+          ...item.toJSON(),
+          unread_comment_count: unreadCount
+        }
+      })
+    )
+    
     res.json({
       code: 200,
-      data: list
+      data: listWithUnreadCount
     })
   } catch (error) {
     console.error('获取我的赞助信息错误:', error)

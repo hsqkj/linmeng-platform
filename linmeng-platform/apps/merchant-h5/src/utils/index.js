@@ -23,3 +23,16 @@ export const formatDate = (dateStr) => {
   
   return `${year}-${month}-${day}`
 }
+
+export const getImageUrl = (url) => {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url.replace('http://localhost:3000', 'http://localhost:3001')
+  }
+  return `http://localhost:3001${url.startsWith('/') ? '' : '/'}${url}`
+}
+
+export const getMemberLevel = (level) => {
+  const levels = ['免费普通会员', '银卡会员', '金卡会员', '钻石会员']
+  return levels[level] || '免费普通会员'
+}

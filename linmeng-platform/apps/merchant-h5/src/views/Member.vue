@@ -68,7 +68,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import api from '../api'
-import { formatDate } from '../utils'
+import { formatDate, getMemberLevel } from '../utils'
 
 const router = useRouter()
 const merchantInfo = ref(null)
@@ -79,11 +79,6 @@ const payLoading = ref(false)
 const getMemberClass = (level) => {
   const classes = ['', 'silver', 'gold', 'diamond']
   return classes[level] || ''
-}
-
-const getMemberLevel = (level) => {
-  const levels = ['免费普通会员', '银卡会员', '金卡会员', '钻石会员']
-  return levels[level] || '免费普通会员'
 }
 
 const getFeatures = (features) => {

@@ -1,4 +1,5 @@
 const { DataTypes } = require('sequelize');
+
 const sequelize = require('../config/database');
 
 const Message = sequelize.define('message', {
@@ -36,6 +37,11 @@ const Message = sequelize.define('message', {
     type: DataTypes.TEXT,
     allowNull: false,
     comment: '消息内容'
+  },
+  activity_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: '关联活动ID'
   },
   read_status: {
     type: DataTypes.TINYINT,

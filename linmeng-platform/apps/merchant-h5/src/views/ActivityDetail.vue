@@ -8,7 +8,7 @@
       <div class="header">
         <van-image
           v-if="activity.cover_img"
-          :src="activity.cover_img"
+          :src="getImageUrl(activity.cover_img)"
           width="100%"
           height="200"
           fit="cover"
@@ -173,7 +173,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { showSuccessToast, showToast } from 'vant'
 import api from '../api'
-import { formatDateTime } from '../utils'
+import { formatDateTime, getImageUrl } from '../utils'
 
 const router = useRouter()
 const route = useRoute()
